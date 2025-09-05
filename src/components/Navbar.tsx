@@ -1,4 +1,10 @@
+import { Link } from "@tanstack/react-router";
+
+
 function Navbar() {
+  
+
+
   return (
     <nav className="bg-white/95 backdrop-blur-sm fixed w-full z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,9 +19,11 @@ function Navbar() {
             <a href="#WorkWithUs" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Trabalhe conosco</a>
             <a href="#faq" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">FAQ</a>
             <a href="#Contact" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Contato</a>
+              <Link to="/login">
             <button className="bg-blue-600 text-white px-6 py-2 rounded-full font-medium hover:bg-blue-700 transition-colors">
               Entrar
             </button>
+            </Link>
           </div>
           <button className="md:hidden">
             <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

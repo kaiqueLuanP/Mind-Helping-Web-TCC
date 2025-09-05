@@ -4,7 +4,7 @@ import About from './components/About';
 import WorkWithUs from './components/WorkWithUs';
 import FAQ from './components/FAQ';
 import Contact from './components/Contact';
-import Login from './pages/login';
+import Login from './routes/login';
 
 function App() {
   return (
