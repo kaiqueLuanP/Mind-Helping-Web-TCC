@@ -21,10 +21,10 @@ function Hero() {
               </button>
             </div>
           </div>
-          <div className="relative">
-            <div className="absolute -top-4 -left-100 w-48 h-48 bg-blue-200 rounded-full filter blur-2xl opacity-30"></div>
+          <div className="relative flex justify-center">
+            <div className="absolute flex items-center justify-center bg-blue-200 rounded-full filter blur-2xl opacity-30"></div>
             <div className="relative">
-              <img src={phone1} alt="App Preview" className="w-full max-w-xl mx-auto ml-30" />
+              <img src={phone1} alt="App Preview" className="w-full max-w-xl mx-auto flex justify-center items-center" />
             </div>
           </div>
         </div>

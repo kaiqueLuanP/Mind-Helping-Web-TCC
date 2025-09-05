@@ -10,7 +10,14 @@ module.exports = {
     "./components/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "#1a1a1a",
+          foreground: "#1a1a1a",
+        },
+      },
+    },
   },
   plugins: [tailwindcssAnimate],
 };
