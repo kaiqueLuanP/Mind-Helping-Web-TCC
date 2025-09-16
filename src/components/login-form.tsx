@@ -79,9 +79,11 @@ export function LoginForm({
                   </div>
                   <Input id="password" type="password" />
                 </div>
-                <Button type="submit" className="w-full text-white bg-primary hover:bg-primary/90">
-                  Login
-                </Button>
+                <Link to="/principal">
+                  <Button type="submit" className="w-full text-white bg-primary hover:bg-primary/90">
+                    Login
+                  </Button>
+                </Link>
               </div>
               <div className="text-center text-sm">
                 Não tem uma conta?{" "}
