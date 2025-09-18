@@ -19,13 +19,17 @@ export default function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <div className="font-bold text-lg">Mind Helping</div>
-
+            <Link
+              to="/"
+              className="opacity-90 hover:opacity-100 transition-opacity duration-200"
+            >
+              <div className="font-bold text-lg text-white">Mind Helping</div>
+            </Link>
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
               <Link
-                to="/"
-                className="opacity-90 hover:opacity-100 transition-opacity duration-200"
+                to="/principal"
+                className="hover:opacity-100 text-white transition-opacity duration-200"
               >
                 Início
               </Link>
