@@ -1,101 +1,81 @@
-import React, { useState } from 'react'
-import { Link, Outlet } from '@tanstack/react-router'
-import { User, Menu, X } from 'lucide-react'
+import { Link, Outlet, useLocation } from '@tanstack/react-router'
+import { Bell, BookAIcon, BrainCircuit, ChartLine, House, UsersIcon } from 'lucide-react'
+import type React from 'react'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Separator } from './ui/separator'
 
 interface LayoutProps {
   children?: React.ReactNode
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { pathname } = useLocation()
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
-  }
+  const iconsAndLabelsAndLinks = [
+    {
+      id: 1,
+      icon: <House />,
+      label: 'Painel',
+      link: '/principal'
+    },
+    {
+      id: 2,
+      icon: <UsersIcon />,
+      label: 'Pacientes',
+      link: '/pacientes'
+    },
+    {
+      id: 3,
+      icon: <ChartLine />,
+      label: 'Relatórios',
+      link: '/relatorios'
+    },
+    {
+      id: 4,
+      icon: <BookAIcon />,
+      label: 'Agenda',
+      link: '/calendar'
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="fixed top-0 left-0 right-0 bg-sky-500 text-white shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link
-              to="/"
-              className="opacity-90 hover:opacity-100 transition-opacity duration-200"
-            >
-              <div className="font-bold text-lg text-white">Mind Helping</div>
-            </Link>
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link
-                to="/principal"
-                className="hover:opacity-100 text-white transition-opacity duration-200"
-              >
-                Início
-              </Link>
-              <Link
-                to="/calendar"
-                className="opacity-90 hover:opacity-100 transition-opacity duration-200"
-              >
-                Agenda
-              </Link>
-            </nav>
-
-            {/* User Info - Desktop */}
-            <div className="hidden md:flex items-center gap-4">
-              <div className="text-sm">Profissional</div>
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <User className="w-4 h-4" />
-              </div>
+    <div className="min-h-screen flex antialiased">
+      <div className='min-h-screen w-[320px] shadow bg-zinc-100 border-r border-zinc-200 py-5 px-2.5 space-y-4 flex flex-col justify-between'>
+        <div className='flex text-lg gap-x-2 w-full justify-between flex-col'>
+          <div className='flex items-center justify-between'>
+            <BrainCircuit className='size-8' />
+            <span>MindHelping Profissional</span>
+            <div className='bg-zinc-50 p-1 rounded-lg border-zinc-200 border shad'>
+              <Bell className='size-6' />
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 hover:bg-white/10 rounded-md transition-colors"
-              onClick={toggleMobileMenu}
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
           </div>
-
-          {/* Mobile Navigation */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-white/20">
-              <nav className="flex flex-col space-y-3 pt-4">
-                <Link
-                  to="/"
-                  className="opacity-90 hover:opacity-100 transition-opacity duration-200 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Início
-                </Link>
-                <Link
-                  to="/calendar"
-                  className="opacity-90 hover:opacity-100 transition-opacity duration-200 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Agenda
-                </Link>
-                <div className="flex items-center gap-3 pt-3 border-t border-white/20">
-                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                    <User className="w-4 h-4" />
+          <div>
+            <div className='flex flex-col gap-y-3 text-md ml-3'>
+              <Separator orientation='horizontal' className='bg-zinc-200 my-3' />
+              {iconsAndLabelsAndLinks.map(item => (
+                <Link key={item.id} to={item.link}>
+                  <div
+                    data-current={pathname === item.link ? 'true' : undefined}
+                    className='flex items-center gap-x-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-300 rounded-lg p-2 transition-colors data-[current=true]:bg-zinc-300 data-[current=true]:text-zinc-950'>
+                    {item.icon}
+                    <span>{item.label}</span>
                   </div>
-                  <div className="text-sm">Profissional</div>
-                </div>
-              </nav>
+                </Link>
+              ))}
             </div>
-          )}
+          </div>
         </div>
-      </header>
-
-      <main className="pt-20 max-w-7xl mx-auto px-4 pb-12">
+        <div className='flex items-center gap-x-4'>
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <span className='font-medium'>Profissional</span>
+        </div>
+      </div>
+      <div className='flex-1 p-4'>
         {children ?? <Outlet />}
-      </main>
+      </div>
     </div>
   )
 }
