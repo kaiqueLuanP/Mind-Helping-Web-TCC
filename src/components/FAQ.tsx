@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "./ui/button";
 
 const faqs = [
   {
@@ -28,21 +29,22 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [openIndex, setOpenIndex] = useState(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="max-w-10xl mx-auto px-6 py- relative bg-gradient-to-r from-blue-50 to-blue-100 py-24 ">
+    <section className="max-w-10xl mx-auto px-6 py- relative bg-gradient-to-r from-blue-50 to-blue-100 p-4 pt-16">
       <h2 className="text-3xl font-bold text-black mb-6">Perguntas Frequentes</h2>
       <div className="space-y-4">
         {faqs.map((faq, index) => (
-          <div key={index} className="border border-gray-700 rounded-lg bg-gray-900/50 backdrop-blur-sm">
-            <button
+          <div key={Math.random()} className="border border-gray-700 rounded-lg bg-gray-900/50 backdrop-blur-sm">
+            <Button
+              type="button"
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
               className="w-full text-left px-4 py-3 font-medium text-gray-200 flex  justify-between hover:text-white transition-colors"
             >
               {faq.question}
               <span>{openIndex === index ? "−" : "+"}</span>
-            </button>
+            </Button>
             {openIndex === index && (
               <p className="px-4 pb-4 text-gray-300 mt-2 mb-[-10px]">{faq.answer}</p>
             )}
