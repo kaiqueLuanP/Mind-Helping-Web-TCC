@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Button } from "./ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 const faqs = [
   {
@@ -29,27 +28,34 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
   return (
     <section className="max-w-10xl mx-auto px-6 py- relative bg-gradient-to-r from-blue-50 to-blue-100 p-4 pt-16">
-      <h2 className="text-3xl font-bold text-black mb-6">Perguntas Frequentes</h2>
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <div key={Math.random()} className="border border-gray-700 rounded-lg bg-gray-900/50 backdrop-blur-sm">
-            <Button
-              type="button"
-              onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="w-full text-left px-4 py-3 font-medium text-gray-200 flex  justify-between hover:text-white transition-colors"
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          Perguntas Frequentes
+        </h2>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Encontre respostas para as dúvidas mais comuns sobre nossa plataforma
+        </p>
+      </div>
+      
+      <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+        <Accordion type="single" collapsible className="w-full">
+          {faqs.map((faq, index) => (
+            <AccordionItem 
+              key={index} 
+              value={`item-${index}`}
+              className="border-b border-gray-200 last:border-b-0"
             >
-              {faq.question}
-              <span>{openIndex === index ? "−" : "+"}</span>
-            </Button>
-            {openIndex === index && (
-              <p className="px-4 pb-4 text-gray-300 mt-2 mb-[-10px]">{faq.answer}</p>
-            )}
-          </div>
-        ))}
+              <AccordionTrigger className="py-6 text-left font-semibold text-gray-800 hover:text-blue-600 hover:no-underline text-lg">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionContent className="pb-6 text-gray-600 leading-relaxed text-base">
+                {faq.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </section>
   );
