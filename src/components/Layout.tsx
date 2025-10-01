@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Bell, BookAIcon, BrainCircuit, ChartLine, House, UsersIcon, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Separator } from './ui/separator'
@@ -12,6 +12,22 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarCollapsed(true)
+      }
+    }
+
+    // Verifica na montagem do componente
+    handleResize()
+
+    // Adiciona listener para mudanças de tamanho
+    window.addEventListener('resize', handleResize)
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const iconsAndLabelsAndLinks = [
     {
@@ -50,7 +66,8 @@ export default function Layout({ children }: LayoutProps) {
           py-5 space-y-4 
           flex flex-col justify-between
           transition-all duration-300 ease-in-out
-          ${sidebarCollapsed ? 'w-[80px]' : 'w-[280px] lg:w-[320px]'}
+          relative
+          ${sidebarCollapsed ? 'w-[80px]' : 'w-[80px] lg:w-[320px]'}
         `}
       >
         {/* Header do sidebar */}
@@ -59,13 +76,13 @@ export default function Layout({ children }: LayoutProps) {
             <div className='flex items-center gap-2 overflow-hidden'>
               <BrainCircuit className='w-8 h-8 flex-shrink-0' />
               {!sidebarCollapsed && (
-                <span className='whitespace-nowrap transition-opacity duration-200'>
+                <span className='whitespace-nowrap transition-opacity duration-200 hidden lg:block'>
                   MindHelping
                 </span>
               )}
             </div>
             {!sidebarCollapsed && (
-              <div className='bg-zinc-50 p-1 rounded-lg border-zinc-200 border flex-shrink-0'>
+              <div className='bg-zinc-50 p-1 rounded-lg border-zinc-200 border flex-shrink-0 hidden lg:block'>
                 <Bell className='w-6 h-6' />
               </div>
             )}
@@ -79,7 +96,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Link 
                   key={item.id} 
                   to={item.link}
-                  title={sidebarCollapsed ? item.label : undefined}
+                  title={item.label}
                 >
                   <div
                     data-current={pathname === item.link ? 'true' : undefined}
@@ -89,12 +106,14 @@ export default function Layout({ children }: LayoutProps) {
                       rounded-lg p-2 transition-colors 
                       data-[current=true]:bg-zinc-300 
                       data-[current=true]:text-zinc-950
-                      ${sidebarCollapsed ? 'justify-center' : ''}
+                      ${sidebarCollapsed ? 'justify-center' : 'justify-center lg:justify-start'}
                     `}
                   >
                     {item.icon}
                     {!sidebarCollapsed && (
-                      <span className='whitespace-nowrap'>{item.label}</span>
+                      <span className='whitespace-nowrap hidden lg:block'>
+                        {item.label}
+                      </span>
                     )}
                   </div>
                 </Link>
@@ -106,7 +125,7 @@ export default function Layout({ children }: LayoutProps) {
         {/* Footer do sidebar */}
         <div className='px-2.5'>
           {!sidebarCollapsed ? (
-            <div className='flex items-center gap-x-4'>
+            <div className='hidden lg:flex items-center gap-x-4'>
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>CN</AvatarFallback>
@@ -126,7 +145,7 @@ export default function Layout({ children }: LayoutProps) {
         {/* Botão de colapsar/expandir */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className='hidden lg:block absolute -right-3 top-8 bg-white border border-zinc-200 rounded-full p-1 shadow-md hover:bg-zinc-100 transition-colors'
+          className='hidden lg:block absolute -right-3 top-8 bg-white border border-zinc-200 rounded-full p-1 shadow-md hover:bg-zinc-100 transition-colors z-10'
           title={sidebarCollapsed ? 'Expandir menu' : 'Colapsar menu'}
         >
           {sidebarCollapsed ? (

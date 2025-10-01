@@ -22,9 +22,15 @@ function Hero() {
               </Button>
             </div>
           </div>
-          <img src={phone1} alt="App Preview" className='' />
+          <div className="flex-1 flex justify-center">
+            <img
+              src={phone1}
+              alt="App Preview"
+              className="w-48 md:w-72 lg:w-96 h-auto"
+            />
+          </div>
+                    </div>
         </div>
-      </div>
     </section>
   );
 }
