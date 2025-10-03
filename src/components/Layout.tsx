@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
       id: 2,
       icon: <UsersIcon className="w-5 h-5" />,
       label: 'Pacientes',
-      link: '/pacientes'
+      link: '/patients'
     },
     {
       id: 3,
