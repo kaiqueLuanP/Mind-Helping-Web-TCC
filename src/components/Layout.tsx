@@ -129,18 +129,22 @@ export default function Layout({ children }: LayoutProps) {
         <div className='px-2.5'>
           {!sidebarCollapsed ? (
             <div className='flex items-center gap-x-4'>
-              <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-              <span className='font-medium'>Profissional</span>
+              <Link to="/profile" className='flex items-center gap-x-3'>
+                <Avatar>
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+                <span className='font-medium'>Profissional</span>
+              </Link>
             </div>
           ) : (
             <div className='flex justify-center'>
-              <Avatar className="w-8 h-8">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
+              <Link to="/profile" className='flex items-center gap-x-3'>
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+              </Link>
             </div>
           )}
         </div>
@@ -220,11 +224,13 @@ export default function Layout({ children }: LayoutProps) {
               {/* Footer Mobile */}
               <div className='p-4 border-t border-zinc-200'>
                 <div className='flex items-center gap-x-3'>
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <span className='font-medium'>Profissional</span>
+                  <Link to="/profile" className='flex items-center gap-x-3'>
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
+                    <span className='font-medium'>Profissional</span>
+                  </Link>
                 </div>
               </div>
             </div>

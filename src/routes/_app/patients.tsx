@@ -50,8 +50,7 @@ function RouteComponent() {
                   <TableCell>{patient.age} anos</TableCell>
                   <TableCell>
                     <Button variant="link" size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      Baixar relatórios
+                      Visualizar Relatórios
                     </Button>
                   </TableCell>
                 </TableRow>
