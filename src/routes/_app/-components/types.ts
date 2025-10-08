@@ -5,7 +5,6 @@ export interface CustomTime {
 
 export interface Schedule {
   id: string
-  title: string
   dates: string[]
   startTime: string
   endTime: string

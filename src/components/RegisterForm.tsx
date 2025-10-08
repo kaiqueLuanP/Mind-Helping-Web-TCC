@@ -224,14 +224,14 @@ export function RegisterForm({
                                 </div>
                             </div>
                             {/* Botão de Cadastro */}
-                            <Button type="submit" className="w-full text-white bg-[#1a1a1a]">
+                            <Button type="submit" className="w-full text-white bg-primary hover:bg-primary/90">
                                 CADASTRAR
                             </Button>
 
                             {/* Link para Login */}
                             <div className="text-center text-sm">
                                 Já tem uma conta?{" "}
-                                   <Link to="/login"> Faça login</Link>
+                                   <Link to="/login" className="text-primary hover:underline"> Faça login</Link>
                             </div>
                         </div>
                     </form>

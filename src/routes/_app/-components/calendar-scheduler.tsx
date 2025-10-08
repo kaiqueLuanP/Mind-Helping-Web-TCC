@@ -4,10 +4,10 @@ import { ScheduleForm } from './schedule-form'
 import { TimeSlotsSidebar } from './time-slots-sidebar'
 import { SchedulesList } from './schedules-list'
 import { Schedule, CustomTime } from './types'
+import { Toast, ToastContainer } from '@/components/ui/toast'
 
 export function CalendarScheduler() {
   const [selectedDates, setSelectedDates] = useState<string[]>([])
-  const [title, setTitle] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [price, setPrice] = useState('')
@@ -20,6 +20,59 @@ export function CalendarScheduler() {
   const [createdSchedules, setCreatedSchedules] = useState<Schedule[]>([])
   const [editingSchedule, setEditingSchedule] = useState<string | null>(null)
 
+  // Estado para toasts
+  const [toasts, setToasts] = useState<Array<{
+    id: string
+    message: string
+    type: 'success' | 'error' | 'warning'
+  }>>([])
+
+  // Função para adicionar toast
+  const addToast = (message: string, type: 'success' | 'error' | 'warning') => {
+    const id = `toast-${Date.now()}-${Math.random()}`
+    setToasts(prev => [...prev, { id, message, type }])
+  }
+
+  // Função para remover toast
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }
+
+  // Validar formulário
+  const validateForm = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = []
+
+
+    if (selectedDates.length === 0) {
+      errors.push('Selecione pelo menos uma data')
+    }
+
+    if (isControlledByHours) {
+      if (!startTime) {
+        errors.push('A hora inicial é obrigatória')
+      }
+      if (!endTime) {
+        errors.push('A hora final é obrigatória')
+      }
+      if (startTime && endTime && startTime >= endTime) {
+        errors.push('A hora final deve ser maior que a hora inicial')
+      }
+      if (startTime && endTime && generatedTimes.length === 0) {
+        errors.push('Nenhum horário foi gerado. Verifique o intervalo.')
+      }
+    } else {
+      if (customTimes.length === 0) {
+        errors.push('Adicione pelo menos um horário de consulta')
+      }
+    }
+
+    if (cancellationPolicy !== "" && cancellationPolicy < 0) {
+      errors.push('A política de cancelamento não pode ser negativa')
+    }
+
+    return { isValid: errors.length === 0, errors }
+  }
+
   const handleDateSelect = (date: string) => {
     setSelectedDates(prev =>
       prev.includes(date)
@@ -29,10 +82,18 @@ export function CalendarScheduler() {
   }
 
   const handleCreateSchedule = () => {
-    if (selectedDates.length > 0 && title && ((isControlledByHours && startTime && endTime) || (!isControlledByHours && customTimes.length > 0))) {
+    const validation = validateForm()
+    
+    if (!validation.isValid) {
+      validation.errors.forEach(error => {
+        addToast(error, 'error')
+      })
+      return
+    }
+
+    try {
       const newSchedule: Schedule = {
         id: `schedule-${Date.now()}`,
-        title,
         dates: [...selectedDates],
         startTime,
         endTime,
@@ -47,61 +108,91 @@ export function CalendarScheduler() {
 
       setCreatedSchedules(prev => [...prev, newSchedule])
       clearForm()
+      addToast('Agenda criada com sucesso!', 'success')
+    } catch (error) {
+      addToast('Erro ao criar agenda. Tente novamente.', 'error')
+      console.error('Erro ao criar agenda:', error)
     }
   }
 
   const handleEditSchedule = (schedule: Schedule) => {
-    setEditingSchedule(schedule.id)
-    setSelectedDates([...schedule.dates])
-    setTitle(schedule.title)
-    setStartTime(schedule.startTime)
-    setEndTime(schedule.endTime)
-    setPrice(schedule.price || '')
-    setCancellationPolicy(schedule.cancellationPolicy)
-    setObservations(schedule.observations)
-    setIsControlledByHours(schedule.isControlledByHours)
-    setIntervalMinutes(schedule.intervalMinutes)
-    setCustomTimes([...schedule.customTimes])
-    setGeneratedTimes([...schedule.generatedTimes])
+    try {
+      setEditingSchedule(schedule.id)
+      setSelectedDates([...schedule.dates])
+      setStartTime(schedule.startTime)
+      setEndTime(schedule.endTime)
+      setPrice(schedule.price || '')
+      setCancellationPolicy(schedule.cancellationPolicy)
+      setObservations(schedule.observations)
+      setIsControlledByHours(schedule.isControlledByHours)
+      setIntervalMinutes(schedule.intervalMinutes)
+      setCustomTimes([...schedule.customTimes])
+      setGeneratedTimes([...schedule.generatedTimes])
+      
+      // Scroll suave para o formulário
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (error) {
+      addToast('Erro ao carregar agenda para edição.', 'error')
+      console.error('Erro ao editar agenda:', error)
+    }
   }
 
   const handleSaveEdit = () => {
-    if (editingSchedule && selectedDates.length > 0 && title) {
-      setCreatedSchedules(prev =>
-        prev.map(schedule =>
-          schedule.id === editingSchedule
-            ? {
-              ...schedule,
-              title,
-              dates: [...selectedDates],
-              startTime,
-              endTime,
-              price,
-              cancellationPolicy,
-              observations,
-              isControlledByHours,
-              generatedTimes: isControlledByHours ? generatedTimes : [],
-              customTimes: isControlledByHours ? [] : [...customTimes],
-              intervalMinutes
-            }
-            : schedule
+    const validation = validateForm()
+    
+    if (!validation.isValid) {
+      validation.errors.forEach(error => {
+        addToast(error, 'error')
+      })
+      return
+    }
+
+    try {
+      if (editingSchedule) {
+        setCreatedSchedules(prev =>
+          prev.map(schedule =>
+            schedule.id === editingSchedule
+              ? {
+                ...schedule,
+                dates: [...selectedDates],
+                startTime,
+                endTime,
+                price,
+                cancellationPolicy,
+                observations,
+                isControlledByHours,
+                generatedTimes: isControlledByHours ? generatedTimes : [],
+                customTimes: isControlledByHours ? [] : [...customTimes],
+                intervalMinutes
+              }
+              : schedule
+          )
         )
-      )
-      clearForm()
+        clearForm()
+        addToast('Agenda atualizada com sucesso!', 'success')
+      }
+    } catch (error) {
+      addToast('Erro ao atualizar agenda. Tente novamente.', 'error')
+      console.error('Erro ao atualizar agenda:', error)
     }
   }
 
   const handleDeleteSchedule = (id: string) => {
-    setCreatedSchedules(prev => prev.filter(s => s.id !== id))
-    if (editingSchedule === id) {
-      clearForm()
+    try {
+      setCreatedSchedules(prev => prev.filter(s => s.id !== id))
+      if (editingSchedule === id) {
+        clearForm()
+      }
+      addToast('Agenda excluída com sucesso!', 'success')
+    } catch (error) {
+      addToast('Erro ao excluir agenda. Tente novamente.', 'error')
+      console.error('Erro ao excluir agenda:', error)
     }
   }
 
   const clearForm = () => {
     setEditingSchedule(null)
     setSelectedDates([])
-    setTitle('')
     setStartTime('')
     setEndTime('')
     setPrice('')
@@ -115,6 +206,18 @@ export function CalendarScheduler() {
 
   return (
     <>
+      {/* Container de Toasts */}
+      <ToastContainer>
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </ToastContainer>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4">
           <SimpleCalendar
@@ -132,9 +235,7 @@ export function CalendarScheduler() {
         </div>
 
         <div className="lg:col-span-2">
-          <ScheduleForm
-            title={title}
-            setTitle={setTitle}
+          <ScheduleForm 
             startTime={startTime}
             setStartTime={setStartTime}
             endTime={endTime}
@@ -160,7 +261,6 @@ export function CalendarScheduler() {
           />
         </div>
       </div>
-
       {createdSchedules.length > 0 && (
         <div className="mt-8">
           <SchedulesList

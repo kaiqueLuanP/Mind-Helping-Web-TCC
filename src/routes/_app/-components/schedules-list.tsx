@@ -1,5 +1,3 @@
-// 📁 src/routes/_app/-components/schedules-list.tsx
-
 import { Edit3 } from 'lucide-react'
 import { Schedule } from './types'
 import { ScheduleCard } from './schedule-card'

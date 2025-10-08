@@ -4,8 +4,6 @@ import { CustomTime } from './types'
 import { CustomTimesInput } from './custom-times-input'
 
 interface ScheduleFormProps {
-  title: string
-  setTitle: (value: string) => void
   startTime: string
   setStartTime: (value: string) => void
   endTime: string
@@ -31,8 +29,6 @@ interface ScheduleFormProps {
 }
 
 export function ScheduleForm({
-  title,
-  setTitle,
   startTime,
   setStartTime,
   endTime,
@@ -80,7 +76,7 @@ export function ScheduleForm({
     } else {
       setGeneratedTimes([])
     }
-  }, [startTime, endTime, intervalMinutes, isControlledByHours])
+  }, [startTime, endTime, intervalMinutes, isControlledByHours, setGeneratedTimes])
 
   return (
     <div className="bg-white border rounded-lg shadow p-6">
@@ -90,27 +86,21 @@ export function ScheduleForm({
       </h3>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-600 mb-1">Título da agenda</label>
-        <input
-          type="text"
-          placeholder="Ex: Agenda de Outubro - Dr. João"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border rounded px-2 py-1 text-sm"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsControlledByHours(!isControlledByHours)}
-            className="text-blue-600"
+            className="text-blue-600 cursor-pointer flex-shrink-0"
           >
-            {isControlledByHours ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+            {isControlledByHours ? <CheckSquare className="h-4 w-4"/> : <Square className="h-4 w-4" />}
           </button>
-          <span className="text-sm text-gray-700">Agenda controlada por horários</span>
-        </label>
+          <span className="text-sm text-gray-700 relative group">
+            Agenda controlada por horários
+            <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 max-w-xs">
+              Ao marcar esta opção o sistema irá gerar horários automáticos de acordo com o intervalo definido.
+            </span>
+          </span>
+        </div>
       </div>
 
       {isControlledByHours ? (
