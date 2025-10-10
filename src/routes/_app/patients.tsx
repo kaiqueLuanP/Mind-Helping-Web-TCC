@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import Layout from '../../components/Layout'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,7 +13,7 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card'
-import { Download } from 'lucide-react'
+import { Download, FileText } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/patients')({
   component: RouteComponent,
@@ -49,9 +49,15 @@ function RouteComponent() {
                   <TableCell>{patient.name}</TableCell>
                   <TableCell>{patient.age} anos</TableCell>
                   <TableCell>
-                    <Button variant="link" size="sm">
-                      Visualizar Relatórios
-                    </Button>
+                    <Link
+                      to="/reports"
+                      search={{ patientId: patient.id }}
+                    >
+                      <Button variant="link" size="sm" className="gap-2">
+                        <FileText className="w-4 h-4" />
+                        Visualizar Relatórios
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}
@@ -64,14 +70,24 @@ function RouteComponent() {
           {patients.map((patient) => (
             <Card key={patient.id} className="bg-white">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-base text-gray-900">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-base text-gray-900 truncate">
                       {patient.name}
                     </h3>
                     <p className="text-sm text-gray-500 mt-0.5">
                       {patient.age} anos
                     </p>
+                    <Link
+                      to="/reports"
+                      search={{ patientId: patient.id }}
+                      className="inline-block mt-2"
+                    >
+                      <Button variant="outline" size="sm" className="gap-2 text-xs">
+                        <FileText className="w-3 h-3" />
+                        Ver Relatórios
+                      </Button>
+                    </Link>
                   </div>
                   <Button variant="ghost" size="icon" className="text-blue-600 shrink-0">
                     <Download className="w-5 h-5" />

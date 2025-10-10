@@ -12,6 +12,13 @@ import {
   composeRenderProps,
   Heading as HeadingRac,
   RangeCalendar as RangeCalendarRac,
+  DatePicker as DatePickerRac,
+  DateInput as DateInputRac,
+  DateSegment as DateSegmentRac,
+  Dialog,
+  Group,
+  Label,
+  Popover
 } from "react-aria-components"
 
 import { cn } from "@/lib/utils"
@@ -109,4 +116,47 @@ function RangeCalendar({ className, ...props }: RangeCalendarProps) {
   )
 }
 
-export { Calendar, RangeCalendar }
+function DateSegment({ segment, state }: { segment: any; state: any }) {
+  return (
+    <DateSegmentRac
+      segment={segment}
+      state={state}
+      className={cn(
+        "text-foreground placeholder:text-muted-foreground/50 px-[1px] tabular-nums outline-none focus:bg-primary focus:text-primary-foreground rounded",
+        !segment.isEditable && "text-muted-foreground"
+      )}
+    />
+  )
+}
+
+interface DatePickerProps extends ComponentProps<typeof DatePickerRac> {
+  className?: string
+  label?: string
+}
+
+function DatePicker({ label, className, ...props }: DatePickerProps) {
+  return (
+    <DatePickerRac
+      className={cn("flex flex-col gap-2", className)}
+      {...props}
+    >
+      {label && <Label className="text-sm font-medium">{label}</Label>}
+      <Group className="flex flex-col gap-2">
+        <DateInputRac
+          className="inline-flex h-10 w-full flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        >
+          {(segment) => (
+            <DateSegment segment={segment} state={props.value} />
+          )}
+        </DateInputRac>
+        <Popover className="w-auto">
+          <Dialog className="p-3 bg-white rounded-lg border shadow-lg">
+            <Calendar />
+          </Dialog>
+        </Popover>
+      </Group>
+    </DatePickerRac>
+  )
+}
+
+export { Calendar, RangeCalendar, DatePicker }

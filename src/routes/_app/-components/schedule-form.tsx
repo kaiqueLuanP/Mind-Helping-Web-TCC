@@ -96,7 +96,7 @@ export function ScheduleForm({
           </button>
           <span className="text-sm text-gray-700 relative group">
             Agenda controlada por horários
-            <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 max-w-xs">
+            <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max bg-gray-100 text-black text-xs rounded py-1 px-2 z-10 max-w-xs">
               Ao marcar esta opção o sistema irá gerar horários automáticos de acordo com o intervalo definido.
             </span>
           </span>
@@ -159,16 +159,19 @@ export function ScheduleForm({
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-600 mb-1">
-          Informar a política de cancelamento da consulta (em horas, por exemplo)
-        </label>
-        <input
-          type="number"
-          className="w-full border rounded px-2 py-1 text-sm"
-          placeholder="Ex: 24"
-          value={cancellationPolicy}
-          onChange={(e) => setCancellationPolicy(Number(e.target.value))}
-        />
+      <span className="text-sm text-gray-700 relative group">
+          <label className="block text-sm text-gray-600 mb-1">Política de cancelamento (dias antes)</label>
+            <input
+              type="number"
+              className="w-full border rounded px-2 py-1 text-sm"
+              placeholder="Ex: 24"
+              value={cancellationPolicy}
+              onChange={(e) => setCancellationPolicy(Number(e.target.value))}
+            />  
+            <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max bg-gray-100 text-black text-xs rounded py-1 px-2 z-10 max-w-xs">
+              Defina o número de dias antes do horário agendado que o cliente pode cancelar a consulta sem custo.
+            </span>
+          </span>
       </div>
 
       <div className="mb-6">

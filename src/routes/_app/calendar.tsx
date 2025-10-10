@@ -1,5 +1,3 @@
-// 📁 src/routes/_app/calendar.tsx
-
 import { createFileRoute } from '@tanstack/react-router'
 import Layout from '../../components/Layout'
 import { CalendarScheduler } from './-components/calendar-scheduler'

@@ -11,8 +11,18 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation()
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  // Inicializa o estado do sidebar a partir do localStorage
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed')
+    return saved === 'true'
+  })
+
+  // Salva o estado no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed))
+  }, [sidebarCollapsed])
 
   const iconsAndLabelsAndLinks = [
     {
@@ -31,7 +41,7 @@ export default function Layout({ children }: LayoutProps) {
       id: 3,
       icon: <ChartLine className="w-5 h-5" />,
       label: 'Relatórios',
-      link: '/relatorios'
+      link: '/reports'
     },
     {
       id: 4,
