@@ -138,7 +138,10 @@ class ProfessionalService {
   // Login do profissional
   async login(email: string, password: string): Promise<{ token: string; professional: ProfessionalResponse }> {
     try {
-      const response = await api.post('/professional/login', { email, password });
+      console.log('Tentando fazer login com:', { email, password });
+      
+      const response = await api.post('/persons/authenticate', { email, password });
+      console.log('Resposta do servidor:', response.data);
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);

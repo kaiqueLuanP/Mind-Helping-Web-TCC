@@ -100,11 +100,11 @@ export function SimpleCalendar({ selectedDates, onDateSelect }: SimpleCalendarPr
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <div className="bg-white border rounded-lg shadow p-4">
+    <div className="w-full max-w-md mx-auto space-y-6">
+      <div className="w-full">
+        <div className="bg-white border rounded-lg shadow p-4 w-full">
           {/* Cabeçalho do calendário */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 w-full">
             <button
               onClick={() => navigateMonth('prev')}
               disabled={!canNavigatePrev()}
@@ -132,7 +132,7 @@ export function SimpleCalendar({ selectedDates, onDateSelect }: SimpleCalendarPr
           </div>
 
           {/* Dias da semana */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-1 mb-2 w-full">
             {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, index) => (
               <div 
                 key={index} 
@@ -144,7 +144,7 @@ export function SimpleCalendar({ selectedDates, onDateSelect }: SimpleCalendarPr
           </div>
 
           {/* Grade do calendário */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1 w-full">
             {calendarDays}
           </div>
         </div>

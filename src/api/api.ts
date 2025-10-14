@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://10.11.185.214:3334',
+  baseURL: 'https://mind-helping-api.fly.dev',
   headers: {
     'Content-Type': 'application/json',
   },

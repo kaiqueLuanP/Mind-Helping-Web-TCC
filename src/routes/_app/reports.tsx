@@ -47,9 +47,6 @@ function ReportsComponent() {
   const [selectedDate, setSelectedDate] = useState<DateValue>(new CalendarDate(2025, 10, 9))
   const [moodStartDate, setMoodStartDate] = useState('2025-03-15')
   const [moodEndDate, setMoodEndDate] = useState('2025-03-20')
-  // CORRIGIDO: datas estavam invertidas
-  const [reportStartDate, setReportStartDate] = useState('2025-10-03')
-  const [reportEndDate, setReportEndDate] = useState('2025-10-04')
 
   // Buscar paciente pelo ID
   const selectedPatient = useMemo(() => {

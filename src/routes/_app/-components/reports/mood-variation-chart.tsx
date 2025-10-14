@@ -10,7 +10,7 @@ interface MoodVariationChartProps {
   onDateChange: (date: DateValue) => void
 }
 
-export function MoodVariationChart({ selectedDate, onDateChange }: MoodVariationChartProps) {
+export function MoodVariationChart({ selectedDate}: MoodVariationChartProps) {
   const [moodData, setMoodData] = useState(calculateMoodAverages(mockMoodData))
 
   useEffect(() => {

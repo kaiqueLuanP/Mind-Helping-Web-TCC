@@ -9,12 +9,60 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate } from "@tanstack/react-router"
+import { useState } from "react"
+import ProfessionalService from "@/services/professionalService"
+import { toast } from "sonner"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email || !formData.password) {
+      toast.error('Por favor, preencha todos os campos');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log('Iniciando login com:', { email: formData.email });
+      const result = await ProfessionalService.login(formData.email, formData.password);
+      console.log('Login bem sucedido:', result);
+      
+      toast.success('Login realizado com sucesso!');
+      navigate({ to:'/principal' });
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         'Erro ao fazer login. Verifique suas credenciais.';
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6 ", className)} {...props}>
       <Card>
@@ -25,14 +73,19 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
-          <div className={cn("login-form flex flex-col gap-6", className)} {...props}>
-            <div className="grid gap-6">
-              <div className="flex flex-col gap-4">
-                <Button variant="default" className="w-full text-white s">
-                  Login com Google
-                </Button>
-              </div>
+          <form onSubmit={handleSubmit}>
+            <div className={cn("login-form flex flex-col gap-6", className)} {...props}>
+              <div className="grid gap-6">
+                <div className="flex flex-col gap-4">
+                  <Button 
+                    type="button"
+                    variant="default" 
+                    className="w-full text-white"
+                    disabled={isLoading}
+                  >
+                    Login com Google
+                  </Button>
+                </div>
               </div>
 
               <div className="relative flex items-center text-sm text-center">
@@ -50,6 +103,11 @@ export function LoginForm({
                     id="email"
                     type="email"
                     placeholder="m@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                    required
+                    autoComplete="email"
                   />
                 </div>
                 <div className="grid gap-3">
@@ -62,13 +120,23 @@ export function LoginForm({
                       Esqueceu sua senha?
                     </a>
                   </div>
-                  <Input id="password" type="password" />
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                    required
+                    autoComplete="current-password"
+                  />
                 </div>
-                <Link to="/principal">
-                  <Button type="submit" className="w-full text-white bg-primary hover:bg-primary/90">
-                    Login
-                  </Button>
-                </Link>
+                <Button 
+                  type="submit" 
+                  className="w-full text-white bg-primary hover:bg-primary/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Entrando...' : 'Login'}
+                </Button>
               </div>
               <div className="text-center text-sm">
                 Não tem uma conta?{" "}

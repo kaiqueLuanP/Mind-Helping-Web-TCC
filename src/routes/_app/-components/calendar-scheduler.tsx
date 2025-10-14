@@ -211,27 +211,28 @@ export function CalendarScheduler() {
         {toasts.map(toast => (
           <Toast
             key={toast.id}
+            id={toast.id}
             message={toast.message}
             type={toast.type}
             onClose={() => removeToast(toast.id)}
           />
         ))}
-      </ToastContainer>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          <SimpleCalendar
-            selectedDates={selectedDates}
-            onDateSelect={handleDateSelect}
-          />
-          
-          {(isControlledByHours ? generatedTimes.length > 0 : customTimes.length > 0) && (
-            <TimeSlotsSidebar
-              isControlledByHours={isControlledByHours}
-              generatedTimes={generatedTimes}
-              customTimes={customTimes}
+      </ToastContainer>      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-4 flex flex-col items-center w-full">
+          <div className="w-full">
+            <SimpleCalendar
+              selectedDates={selectedDates}
+              onDateSelect={handleDateSelect}
             />
-          )}
+          
+            {(isControlledByHours ? generatedTimes.length > 0 : customTimes.length > 0) && (
+              <TimeSlotsSidebar
+                isControlledByHours={isControlledByHours}
+                generatedTimes={generatedTimes}
+                customTimes={customTimes}
+              />
+            )}
+          </div>
         </div>
 
         <div className="lg:col-span-2">
