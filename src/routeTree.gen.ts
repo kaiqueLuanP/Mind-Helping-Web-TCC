@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
+import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppPrincipalRouteImport } from './routes/_app/principal'
 import { Route as AppPatientsRouteImport } from './routes/_app/patients'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
@@ -43,6 +44,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/_app/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPrincipalRoute = AppPrincipalRouteImport.update({
   id: '/_app/principal',
   path: '/principal',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AppCalendarRoute
   '/patients': typeof AppPatientsRoute
   '/principal': typeof AppPrincipalRoute
+  '/profile': typeof AppProfileRoute
   '/reports': typeof AppReportsRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarRoute
   '/patients': typeof AppPatientsRoute
   '/principal': typeof AppPrincipalRoute
+  '/profile': typeof AppProfileRoute
   '/reports': typeof AppReportsRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/patients': typeof AppPatientsRoute
   '/_app/principal': typeof AppPrincipalRoute
+  '/_app/profile': typeof AppProfileRoute
   '/_app/reports': typeof AppReportsRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/patients'
     | '/principal'
+    | '/profile'
     | '/reports'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/patients'
     | '/principal'
+    | '/profile'
     | '/reports'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/_app/calendar'
     | '/_app/patients'
     | '/_app/principal'
+    | '/_app/profile'
     | '/_app/reports'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
   AppPatientsRoute: typeof AppPatientsRoute
   AppPrincipalRoute: typeof AppPrincipalRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppReportsRoute: typeof AppReportsRoute
 }
 
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/principal': {
       id: '/_app/principal'
       path: '/principal'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
   AppPatientsRoute: AppPatientsRoute,
   AppPrincipalRoute: AppPrincipalRoute,
+  AppProfileRoute: AppProfileRoute,
   AppReportsRoute: AppReportsRoute,
 }
 export const routeTree = rootRouteImport

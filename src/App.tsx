@@ -4,9 +4,12 @@ import FAQ from './components/FAQ';
 import Hero from './components/Hero';
 import Navbar from './components/Navbar';
 import WorkWithUs from './components/WorkWithUs';
+import { AuthProvider } from './contexts/authContext';
 
 function App() {
   return (
+
+<AuthProvider>
     <div className="min-h-screen  text-white relative">
       {/* Overlay gradiente semi-transparente */}
       <div
@@ -30,6 +33,7 @@ function App() {
         <Contact />
       </div>
     </div>
+    </AuthProvider>
   );
 }
 

@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-import ProfessionalService from "@/services/professionalService"
 import { toast } from "sonner"
+import { useAuth } from "@/hooks/useAuth"
 
 export function LoginForm({
   className,
@@ -33,31 +33,41 @@ export function LoginForm({
     }));
   };
 
+  const { login } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password) {
-      toast.error('Por favor, preencha todos os campos');
+    // Validação dos campos
+    if (!formData.email) {
+      toast.error('Por favor, informe o email');
+      return;
+    }
+
+    if (!formData.password) {
+      toast.error('Por favor, informe a senha');
+      return;
+    }
+
+    // Validação do formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Por favor, insira um email válido');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log('Iniciando login com:', { email: formData.email });
-      const result = await ProfessionalService.login(formData.email, formData.password);
-      console.log('Login bem sucedido:', result);
+      // Tenta fazer login
+      await login(formData.email, formData.password);
       
+      // Se chegou aqui, login foi bem sucedido
       toast.success('Login realizado com sucesso!');
-      navigate({ to:'/principal' });
+      navigate({ to: '/principal' });
     } catch (error: any) {
-      console.error('Erro no login:', error);
-      
-      const errorMessage = error.response?.data?.message || 
-                         error.message || 
-                         'Erro ao fazer login. Verifique suas credenciais.';
-      
-      toast.error(errorMessage);
+      // O erro já está formatado pelo interceptor do axios
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

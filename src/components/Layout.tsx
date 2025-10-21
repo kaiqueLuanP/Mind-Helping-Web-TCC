@@ -1,9 +1,10 @@
+import React, { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Bell, BookAIcon, BrainCircuit, ChartLine, House, UsersIcon, Menu, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import type React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Separator } from './ui/separator'
+import { useAuth } from '@/hooks/useAuth'
+
 
 interface LayoutProps {
   children?: React.ReactNode
@@ -12,6 +13,12 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const auth = useAuth()
+  
+  console.log('Auth context:', auth)
+  console.log('User data:', auth.user)
+
+  const { user } = auth
   
   // Inicializa o estado do sidebar a partir do localStorage
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -142,9 +149,9 @@ export default function Layout({ children }: LayoutProps) {
               <Link to="/profile" className='flex items-center gap-x-3'>
                 <Avatar>
                   <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarFallback>{user?.name?.charAt(0) || 'P'}</AvatarFallback>
                 </Avatar>
-                <span className='font-medium'>Profissional</span>
+                <span className='font-medium'>{user?.name}</span>
               </Link>
             </div>
           ) : (
@@ -152,7 +159,7 @@ export default function Layout({ children }: LayoutProps) {
               <Link to="/profile" className='flex items-center gap-x-3'>
                 <Avatar className="w-8 h-8">
                   <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarFallback>{user?.name?.charAt(0) || 'P'}</AvatarFallback>
                 </Avatar>
               </Link>
             </div>
@@ -237,9 +244,9 @@ export default function Layout({ children }: LayoutProps) {
                   <Link to="/profile" className='flex items-center gap-x-3'>
                     <Avatar className="w-10 h-10">
                       <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>CN</AvatarFallback>
+                      <AvatarFallback>{user?.name?.charAt(0) || 'P'}</AvatarFallback>
                     </Avatar>
-                    <span className='font-medium'>Profissional</span>
+                    <span className='font-medium'>{user?.name}</span>
                   </Link>
                 </div>
               </div>
