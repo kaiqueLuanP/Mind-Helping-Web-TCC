@@ -1,6 +1,6 @@
 import { X, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
-import { CustomTime } from './types'
+import { CustomTime } from '../types'
 
 interface CustomTimesInputProps {
   customTimes: CustomTime[]

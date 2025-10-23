@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Layout from '../../components/Layout'
-import { CalendarScheduler } from './-components/calendar-scheduler'
+import { CalendarScheduler } from './-components/calendar/calendar-scheduler'
 
 export const Route = createFileRoute('/_app/calendar')({
   component: CalendarComponent,

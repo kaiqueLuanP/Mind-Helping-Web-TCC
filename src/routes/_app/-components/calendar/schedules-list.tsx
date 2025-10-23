@@ -1,5 +1,5 @@
 import { Edit3 } from 'lucide-react'
-import { Schedule } from './types'
+import { Schedule } from '../types'
 import { ScheduleCard } from './schedule-card'
 import { groupSchedulesByMonth } from './schedule-helpers'
 

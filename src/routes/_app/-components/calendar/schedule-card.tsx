@@ -1,5 +1,5 @@
 import { Edit, Trash2 } from 'lucide-react'
-import { Schedule } from './types'
+import { Schedule } from '../types'
 import { formatDate } from './schedule-helpers'
 
 interface ScheduleCardProps {

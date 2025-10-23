@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Clock, Plus, Save, X, CheckSquare, Square } from 'lucide-react'
-import { CustomTime } from './types'
+import { CustomTime } from '../types'
 import { CustomTimesInput } from './custom-times-input'
 
 interface ScheduleFormProps {

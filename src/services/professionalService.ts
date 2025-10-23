@@ -246,6 +246,19 @@ class ProfessionalService {
       // A API retorna { professional: {...} }
       const profileData = response.data.professional || response.data;
 
+      // Validação dos dados recebidos
+      if (!profileData || typeof profileData !== 'object') {
+        throw new Error('Dados do perfil inválidos');
+      }
+
+      // Garantir que todos os campos necessários existem
+      const requiredFields = ['id', 'name', 'email', 'cpf', 'phone', 'crp', 'birth_date'];
+      for (const field of requiredFields) {
+        if (!profileData[field]) {
+          console.warn(`Campo ${field} ausente no perfil`);
+        }
+      }
+
       console.log('Perfil carregado com sucesso');
       return profileData;
     } catch (error: any) {

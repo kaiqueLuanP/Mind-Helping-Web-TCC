@@ -3,7 +3,7 @@ import { SimpleCalendar } from './simple-calendar'
 import { ScheduleForm } from './schedule-form'
 import { TimeSlotsSidebar } from './time-slots-sidebar'
 import { SchedulesList } from './schedules-list'
-import { Schedule, CustomTime } from './types'
+import { Schedule, CustomTime } from '../types'
 import { Toast, ToastContainer } from '@/components/ui/toast'
 
 export function CalendarScheduler() {

@@ -1,4 +1,4 @@
-import { CustomTime } from './types'
+import { CustomTime } from '../types'
 
 interface TimeSlotsSidebarProps {
   isControlledByHours: boolean
