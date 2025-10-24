@@ -67,7 +67,7 @@ export function AppointmentsScheduler() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-          Agendamentos
+          Agendamentos Realizados
         </h1>
         <Button variant="ghost" size="icon" className="rounded-full">
           <User className="w-5 h-5" />

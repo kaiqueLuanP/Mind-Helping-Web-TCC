@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Bell, BookAIcon, BrainCircuit, ChartLine, House, UsersIcon, Menu, X } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarFallback  } from './ui/avatar'
 import { Separator } from './ui/separator'
 import { useAuth } from '@/hooks/useAuth'
-
 
 interface LayoutProps {
   children?: React.ReactNode
@@ -19,7 +18,19 @@ export default function Layout({ children }: LayoutProps) {
   console.log('User data:', auth.user)
 
   const { user } = auth
-  
+
+  // Gera as iniciais do usuário com useMemo para manter o estado
+  const initials = useMemo(() => {
+    return user?.name
+      ? user.name
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .substring(0, 2)
+          .toUpperCase()
+      : 'U';
+  }, [user?.name]);
+
   // Inicializa o estado do sidebar a partir do localStorage
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed')
@@ -148,18 +159,16 @@ export default function Layout({ children }: LayoutProps) {
             <div className='flex items-center gap-x-4'>
               <Link to="/profile" className='flex items-center gap-x-3'>
                 <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>{user?.name?.charAt(0) || 'P'}</AvatarFallback>
+                  <AvatarFallback className="text-sm">{initials}</AvatarFallback>
                 </Avatar>
-                <span className='font-medium'>{user?.name}</span>
+                <span className='font-medium'>{user?.name || 'Usuário'}</span>
               </Link>
             </div>
           ) : (
             <div className='flex justify-center'>
               <Link to="/profile" className='flex items-center gap-x-3'>
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>{user?.name?.charAt(0) || 'P'}</AvatarFallback>
+                  <AvatarFallback className="text-sm">{initials}</AvatarFallback>
                 </Avatar>
               </Link>
             </div>
@@ -241,12 +250,15 @@ export default function Layout({ children }: LayoutProps) {
               {/* Footer Mobile */}
               <div className='p-4 border-t border-zinc-200'>
                 <div className='flex items-center gap-x-3'>
-                  <Link to="/profile" className='flex items-center gap-x-3'>
+                  <Link 
+                    to="/profile" 
+                    className='flex items-center gap-x-3'
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>{user?.name?.charAt(0) || 'P'}</AvatarFallback>
+                      <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
-                    <span className='font-medium'>{user?.name}</span>
+                    <span className='font-medium'>{user?.name || 'Usuário'}</span>
                   </Link>
                 </div>
               </div>

@@ -4,15 +4,13 @@ import Layout from '../../components/Layout'
 import { CardIndicatorDashboard } from './-components/card-indicator-dashboard'
 import { ChartSchedulingPreviousSixMonths } from './-components/calendar/chart-scheduling-previous-six-month'
 import { useDadosDashboard } from '@/hooks/useDadosDashboard'
-import { useAuth } from '@/hooks/useAuth'
 
 export const Route = createFileRoute('/_app/principal')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data, isLoading, error } = useDadosDashboard()
-  const { user } = useAuth();
+  const { data } = useDadosDashboard()
   
   // Se estiver carregando retora zero
   const dashboardData = {

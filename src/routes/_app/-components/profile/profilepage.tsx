@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +29,6 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,7 +117,6 @@ export default function ProfilePage() {
     return d.toLocaleDateString('pt-BR');
   };
 
-  // Se não tiver dados do perfil, não renderiza nada
   if (!profileData) {
     return null;
   }
@@ -153,10 +150,10 @@ export default function ProfilePage() {
         <Card>
           <CardHeader className="text-center pb-8">
             <div className="flex flex-col items-center space-y-4">
+
               {/* Avatar com badge de verificação */}
               <div className="relative">
                 <Avatar className="w-24 h-24 sm:w-32 sm:h-32">
-                  <AvatarImage src="https://github.com/shadcn.png" />
                   <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
                 </Avatar>
                 <button 
