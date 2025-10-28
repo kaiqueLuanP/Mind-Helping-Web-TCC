@@ -45,11 +45,16 @@ export interface ProfessionalResponse {
   phone: string;
   crp: string;
   birth_date: string;
+  birthDate?: string; 
   address: string;
   number: number;
   cepUser: string;
+  cep?: string; 
   uf: string;
   voluntary: boolean;
+  city: string;
+  neighborhood: string;
+  complement?: string;
   createdAt: string;
 }
 
@@ -101,7 +106,6 @@ class ProfessionalService {
 
   async login(email: string, password: string): Promise<{ token: string; professional: ProfessionalResponse }> {
     try {
-      // Validações iniciais
       if (!email || !password) {
         throw new Error('Email e senha são obrigatórios');
       }
@@ -109,7 +113,6 @@ class ProfessionalService {
       console.log('Iniciando login...');
       console.log('Email:', email.trim());
 
-      // Faz a requisição de login no endpoint correto
       const response = await api.post('/persons/authenticate', {
         email: email.trim(),
         password: password
@@ -118,13 +121,11 @@ class ProfessionalService {
       console.log('Response.status:', response.status);
       console.log('Response.data:', response.data);
 
-      // Verifica se houve erro (status diferente de 2xx)
       if (response.status >= 400) {
         console.error('Erro na autenticação:', response.data);
         throw new Error(response.data?.message || 'Email ou senha incorretos');
       }
 
-      // A API retorna: { user: { userId: "...", isAuthenticated: true } }
       const { user } = response.data;
       
       if (!user) {
@@ -134,7 +135,6 @@ class ProfessionalService {
 
       const { userId, isAuthenticated } = user;
 
-      // Verifica se está autenticado
       if (!isAuthenticated) {
         console.error('Autenticação falhou - isAuthenticated é false');
         throw new Error('Email ou senha incorretos');
@@ -145,24 +145,19 @@ class ProfessionalService {
         throw new Error('Dados do usuário inválidos');
       }
 
-      // Se chegou aqui, está autenticado!
       console.log('Usuário autenticado com sucesso!');
       console.log('User ID:', userId);
 
-      // Gera um token simples já que a API não retorna um token JWT
       const authToken = `auth_${userId}_${Date.now()}`;
 
       console.log('Login bem-sucedido!');
 
-      // Salva no localStorage
       localStorage.setItem('token', authToken);
       localStorage.setItem('professionalId', userId);
       localStorage.setItem('isAuthenticated', 'true');
       
-      // Configura o axios
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
 
-      // Busca os dados completos do perfil para ter mais informações
       let userData: any = { id: userId };
       try {
         const profileResponse = await api.get(`/professional/${userId}`);
@@ -177,7 +172,6 @@ class ProfessionalService {
         console.warn('⚠️ Não foi possível carregar o perfil completo, usando dados básicos');
       }
 
-      // Retorna os dados
       return {
         token: authToken,
         professional: userData
@@ -186,16 +180,13 @@ class ProfessionalService {
     } catch (error: any) {
       console.error('❌ Erro durante login:', error);
 
-      // Mensagem de erro padrão
       let errorMessage = 'Erro ao tentar fazer login';
       
-      // Erros de conexão/timeout
       if (error.code === 'ECONNABORTED') {
         errorMessage = 'Tempo limite excedido. O servidor está demorando para responder.';
       } else if (!error.response && error.message.includes('Network Error')) {
         errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
       } 
-      // Erros com resposta do servidor
       else if (error.response) {
         switch (error.response.status) {
           case 401:
@@ -234,33 +225,42 @@ class ProfessionalService {
       if (!id || !isAuthenticated) {
         throw new Error('Usuário não autenticado');
       }
+
+      console.log(`Buscando perfil em: /professionals/profile/${id}`);
+
+      const response = await api.get(`/professionals/profile/${id}`);
       
-      // Tenta buscar o perfil
-      console.log(`Buscando perfil em: /professional/${id}`);
-      const response = await api.get(`/professional/${id}`);
-      
+
       if (!response.data) {
         throw new Error('Dados do perfil não encontrados');
       }
 
-      // A API retorna { professional: {...} }
       const profileData = response.data.professional || response.data;
 
-      // Validação dos dados recebidos
       if (!profileData || typeof profileData !== 'object') {
         throw new Error('Dados do perfil inválidos');
       }
 
-      // Garantir que todos os campos necessários existem
-      const requiredFields = ['id', 'name', 'email', 'cpf', 'phone', 'crp', 'birth_date'];
-      for (const field of requiredFields) {
-        if (!profileData[field]) {
-          console.warn(`Campo ${field} ausente no perfil`);
-        }
-      }
+      // Normaliza os dados para ter tanto snake_case quanto camelCase
+      const normalizedProfile = {
+        ...profileData,
+        id,
+        birthDate: profileData.birth_date || profileData.birthDate || '',
+        birth_date: profileData.birth_date || profileData.birthDate || '',
+        cep: profileData.cepUser || profileData.cep || '',
+        cepUser: profileData.cepUser || profileData.cep || ''
+      };
 
       console.log('Perfil carregado com sucesso');
-      return profileData;
+      console.log('Dados normalizados:', {
+        birthDate: normalizedProfile.birthDate,
+        birth_date: normalizedProfile.birth_date,
+        cep: normalizedProfile.cep,
+        cepUser: normalizedProfile.cepUser,
+        crp: normalizedProfile.crp
+      });
+      
+      return normalizedProfile;
     } catch (error: any) {
       console.error('Erro ao buscar perfil:', error);
       throw new Error(error.response?.data?.message || 'Erro ao buscar perfil');

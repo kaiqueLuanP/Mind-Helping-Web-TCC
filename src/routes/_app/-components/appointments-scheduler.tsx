@@ -51,7 +51,7 @@ export function AppointmentsScheduler() {
       available: 'bg-gray-100 text-gray-700 border-gray-200',
     }
     const labels: Record<string, string> = {
-      Agendado: 'Confirmada',
+      Agendado: 'Agendada',
       cancelled: 'Cancelada',
       available: 'Disponível',
     }
@@ -124,7 +124,7 @@ export function AppointmentsScheduler() {
         </div>
       </div>
 
-      {/* SEÇÃO SEPARADA: Todos os Pacientes */}
+      
       <section className="w-full">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="font-semibold text-lg mb-4">Todos os Pacientes</h2>

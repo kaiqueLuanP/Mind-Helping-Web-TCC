@@ -365,6 +365,8 @@ export function RegisterForm({
                                         id="password"
                                         type="password"
                                         placeholder="Mínimo 8 caracteres"
+                                        minLength={8}
+                                        
                                         value={formData.password}
                                         onChange={handleChange}
                                         required
