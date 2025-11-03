@@ -77,7 +77,7 @@ export function ChartSchedulingPreviousSixMonths() {
                 </ChartContainer>
             </CardContent>
             <CardFooter className="flex-col items-start gap-2 text-sm">
-                <span className="text-muted-foreground">Mind Helping Profissional &copy; 2024</span>
+                <span className="text-muted-foreground">Mind Helping Profissional &copy; 2025</span>
             </CardFooter>
         </Card>)
 }

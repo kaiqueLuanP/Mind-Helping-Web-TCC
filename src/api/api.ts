@@ -46,9 +46,19 @@ api.interceptors.request.use(
 // Interceptor para tratar erros de resposta
 api.interceptors.response.use(
   (response) => {
-    if (response.status !== 204 && !response.data) {
+    // 🔥 CORREÇÃO: Permitir respostas vazias para status de sucesso (2xx)
+    // Apenas validar resposta vazia se NÃO for 204 (No Content) e NÃO for sucesso (2xx)
+    const isSuccessStatus = response.status >= 200 && response.status < 300;
+    
+    if (response.status !== 204 && !isSuccessStatus && !response.data) {
       throw new Error('Resposta vazia do servidor');
     }
+    
+    // Se a resposta for de sucesso mas vazia, retornar um objeto vazio
+    if (isSuccessStatus && !response.data) {
+      response.data = { success: true };
+    }
+    
     return response;
   },
   (error: AxiosError<ApiErrorResponse>) => {

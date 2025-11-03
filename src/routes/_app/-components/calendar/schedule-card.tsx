@@ -16,9 +16,6 @@ export function ScheduleCard({ schedule, onEdit, onDelete }: ScheduleCardProps) 
   return (
     <div className="bg-white border rounded-lg shadow p-4">
       <div className="flex justify-between items-start mb-2">
-        <h5 className="font-medium text-gray-800">
-          {schedule.title}
-        </h5>
         <div className="flex gap-1">
           <button
             onClick={onEdit}

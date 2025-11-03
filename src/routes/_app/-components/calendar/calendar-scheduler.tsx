@@ -1,10 +1,12 @@
-import { useState } from 'react' 
+import { useState, useEffect } from 'react'
 import { SimpleCalendar } from './simple-calendar'
 import { ScheduleForm } from './schedule-form'
 import { TimeSlotsSidebar } from './time-slots-sidebar'
 import { SchedulesList } from './schedules-list'
 import { Schedule, CustomTime } from '../types'
 import { Toast, ToastContainer } from '@/components/ui/toast'
+import scheduleService, { ScheduleCreateData } from '@/services/scheduleService'
+import { useAuth } from '@/hooks/useAuth'
 
 export function CalendarScheduler() {
   const [selectedDates, setSelectedDates] = useState<string[]>([])
@@ -19,29 +21,80 @@ export function CalendarScheduler() {
   const [customTimes, setCustomTimes] = useState<CustomTime[]>([])
   const [createdSchedules, setCreatedSchedules] = useState<Schedule[]>([])
   const [editingSchedule, setEditingSchedule] = useState<string | null>(null)
-
-  // Estado para toasts
+  const [isLoading, setIsLoading] = useState(false)
+  const { user } = useAuth()
+  
   const [toasts, setToasts] = useState<Array<{
     id: string
     message: string
     type: 'success' | 'error' | 'warning'
   }>>([])
 
-  // Função para adicionar toast
+  // ✅ BUSCAR AGENDAS AO CARREGAR
+  useEffect(() => {
+    const loadSchedules = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        console.log('🔍 Buscando agendas existentes...');
+        const schedules = await scheduleService.getSchedules(user.id);
+        console.log('📦 Agendas recebidas:', schedules);
+        
+        if (!schedules || schedules.length === 0) {
+          console.log('ℹ️ Nenhuma agenda encontrada');
+          setCreatedSchedules([]);
+          return;
+        }
+        
+        // Converter para o formato do componente
+        const mappedSchedules: Schedule[] = schedules.map(s => {
+          // Extrair data e hora SEM conversão de fuso
+          const initialDate = new Date(s.initialTime);
+          const endDate = new Date(s.endTime);
+          
+          return {
+            id: s.id,
+            dates: [s.initialTime.split('T')[0]], // Pegar apenas YYYY-MM-DD
+            startTime: `${String(initialDate.getUTCHours()).padStart(2, '0')}:${String(initialDate.getUTCMinutes()).padStart(2, '0')}`,
+            endTime: `${String(endDate.getUTCHours()).padStart(2, '0')}:${String(endDate.getUTCMinutes()).padStart(2, '0')}`,
+            price: s.averageValue.toString(),
+            cancellationPolicy: s.cancellationPolicy,
+            observations: s.observation,
+            isControlledByHours: s.isControlled,
+            generatedTimes: [],
+            customTimes: [],
+            intervalMinutes: s.interval
+          };
+        });
+        
+        setCreatedSchedules(mappedSchedules);
+        console.log(`✅ ${mappedSchedules.length} agendas carregadas com sucesso`);
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar agendas:', error);
+        // Não mostrar erro se for 404 (sem agendas)
+        if (error.response?.status !== 404) {
+          addToast('Não foi possível carregar as agendas existentes', 'warning');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSchedules();
+  }, [user?.id]);
+
   const addToast = (message: string, type: 'success' | 'error' | 'warning') => {
     const id = `toast-${Date.now()}-${Math.random()}`
     setToasts(prev => [...prev, { id, message, type }])
   }
 
-  // Função para remover toast
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id))
   }
 
-  // Validar formulário
   const validateForm = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = []
-
 
     if (selectedDates.length === 0) {
       errors.push('Selecione pelo menos uma data')
@@ -81,9 +134,9 @@ export function CalendarScheduler() {
     )
   }
 
-  const handleCreateSchedule = () => {
+  const handleCreateSchedule = async () => {
     const validation = validateForm()
-    
+
     if (!validation.isValid) {
       validation.errors.forEach(error => {
         addToast(error, 'error')
@@ -91,27 +144,117 @@ export function CalendarScheduler() {
       return
     }
 
+    if (!user || !user.id) {
+      addToast('Usuário não autenticado. Faça login novamente.', 'error')
+      return
+    }
+
+    setIsLoading(true)
+
     try {
-      const newSchedule: Schedule = {
-        id: `schedule-${Date.now()}`,
-        dates: [...selectedDates],
-        startTime,
-        endTime,
-        price,
-        cancellationPolicy,
-        observations,
-        isControlledByHours,
-        generatedTimes: isControlledByHours ? generatedTimes : [],
-        customTimes: isControlledByHours ? [] : [...customTimes],
-        intervalMinutes
+      const now = new Date();
+      const futureSchedules: ScheduleCreateData[] = [];
+      const pastDates: string[] = [];
+      
+      selectedDates.forEach(selectedDate => {
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+        
+        // Criar data local
+        const initialDate = new Date(year, month - 1, day, startHour, startMinute, 0, 0);
+        const endDate = new Date(year, month - 1, day, endHour, endMinute, 0, 0);
+        
+        if (initialDate < now) {
+          console.warn(`⚠️ Data no passado ignorada: ${selectedDate} às ${startTime}`);
+          pastDates.push(selectedDate);
+          return;
+        }
+        
+        // ✅ CORREÇÃO DEFINITIVA: Criar string ISO mantendo o horário local
+        const pad = (n: number) => String(n).padStart(2, '0');
+        
+        // Formato: YYYY-MM-DDTHH:mm:ss (SEM o Z no final)
+        const initialTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(startHour)}:${pad(startMinute)}:00`;
+        const endTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(endHour)}:${pad(endMinute)}:00`;
+
+        console.log(`✅ Data futura válida: ${selectedDate}`);
+        console.log(`   ${startTime} (local) -> ${initialTimeISO}`);
+        console.log(`   ${endTime} (local) -> ${endTimeISO}`);
+
+        futureSchedules.push({
+          initialTime: initialTimeISO,
+          endTime: endTimeISO,
+          interval: intervalMinutes,
+          cancellationPolicy: cancellationPolicy === "" ? 0 : Number(cancellationPolicy),
+          averageValue: price ? parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.')) : 0,
+          observation: observations || "",
+          isControlled: isControlledByHours
+        });
+      });
+
+      if (futureSchedules.length === 0) {
+        addToast('Todas as datas selecionadas estão no passado. Selecione datas futuras.', 'error');
+        setIsLoading(false);
+        return;
       }
 
-      setCreatedSchedules(prev => [...prev, newSchedule])
-      clearForm()
-      addToast('Agenda criada com sucesso!', 'success')
-    } catch (error) {
-      addToast('Erro ao criar agenda. Tente novamente.', 'error')
-      console.error('Erro ao criar agenda:', error)
+      if (pastDates.length > 0) {
+        addToast(`${pastDates.length} data(s) no passado foram ignoradas.`, 'warning');
+      }
+
+      console.log('📤 Enviando para API:', JSON.stringify(futureSchedules, null, 2));
+      
+      const response = await scheduleService.createSchedule(user.id, futureSchedules);
+      console.log('✅ Resposta da API:', response);
+
+      // ✅ RECARREGAR AGENDAS APÓS CRIAR
+      try {
+        const updatedSchedules = await scheduleService.getSchedules(user.id);
+        console.log('🔄 Agendas recarregadas:', updatedSchedules);
+        
+        if (updatedSchedules && updatedSchedules.length > 0) {
+          const mappedSchedules: Schedule[] = updatedSchedules.map(s => {
+            const initialDate = new Date(s.initialTime);
+            const endDate = new Date(s.endTime);
+            
+            return {
+              id: s.id,
+              dates: [s.initialTime.split('T')[0]],
+              startTime: `${String(initialDate.getUTCHours()).padStart(2, '0')}:${String(initialDate.getUTCMinutes()).padStart(2, '0')}`,
+              endTime: `${String(endDate.getUTCHours()).padStart(2, '0')}:${String(endDate.getUTCMinutes()).padStart(2, '0')}`,
+              price: s.averageValue.toString(),
+              cancellationPolicy: s.cancellationPolicy,
+              observations: s.observation,
+              isControlledByHours: s.isControlled,
+              generatedTimes: [],
+              customTimes: [],
+              intervalMinutes: s.interval
+            };
+          });
+          
+          setCreatedSchedules(mappedSchedules);
+        }
+      } catch (reloadError) {
+        console.warn('⚠️ Não foi possível recarregar agendas, mas criação foi bem-sucedida');
+      }
+      
+      clearForm();
+      addToast(`Agenda criada com sucesso para ${futureSchedules.length} dia(s)!`, 'success');
+
+    } catch (error: any) {
+      console.error('❌ ERRO COMPLETO:', error);
+      console.error('   Response:', error.response);
+      console.error('   Data:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || error.message 
+        || 'Erro ao criar agenda. Tente novamente.';
+      
+      addToast(errorMessage, 'error');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -128,8 +271,7 @@ export function CalendarScheduler() {
       setIntervalMinutes(schedule.intervalMinutes)
       setCustomTimes([...schedule.customTimes])
       setGeneratedTimes([...schedule.generatedTimes])
-      
-      // Scroll suave para o formulário
+
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       addToast('Erro ao carregar agenda para edição.', 'error')
@@ -139,7 +281,7 @@ export function CalendarScheduler() {
 
   const handleSaveEdit = () => {
     const validation = validateForm()
-    
+
     if (!validation.isValid) {
       validation.errors.forEach(error => {
         addToast(error, 'error')
@@ -177,16 +319,30 @@ export function CalendarScheduler() {
     }
   }
 
-  const handleDeleteSchedule = (id: string) => {
+  const handleDeleteSchedule = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta agenda?')) {
+      return;
+    }
+
     try {
-      setCreatedSchedules(prev => prev.filter(s => s.id !== id))
+      setIsLoading(true);
+      console.log('🗑️ Deletando agenda:', id);
+      
+      await scheduleService.deleteSchedule(id);
+      
+      setCreatedSchedules(prev => prev.filter(s => s.id !== id));
+      
       if (editingSchedule === id) {
-        clearForm()
+        clearForm();
       }
-      addToast('Agenda excluída com sucesso!', 'success')
-    } catch (error) {
-      addToast('Erro ao excluir agenda. Tente novamente.', 'error')
-      console.error('Erro ao excluir agenda:', error)
+      
+      addToast('Agenda excluída com sucesso!', 'success');
+      console.log('✅ Agenda deletada');
+    } catch (error: any) {
+      console.error('❌ Erro ao deletar:', error);
+      addToast('Erro ao excluir agenda. Tente novamente.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -206,7 +362,6 @@ export function CalendarScheduler() {
 
   return (
     <>
-      {/* Container de Toasts */}
       <ToastContainer>
         {toasts.map(toast => (
           <Toast
@@ -217,14 +372,16 @@ export function CalendarScheduler() {
             onClose={() => removeToast(toast.id)}
           />
         ))}
-      </ToastContainer>      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      </ToastContainer>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4 flex flex-col items-center w-full">
           <div className="w-full">
             <SimpleCalendar
               selectedDates={selectedDates}
               onDateSelect={handleDateSelect}
             />
-          
+
             {(isControlledByHours ? generatedTimes.length > 0 : customTimes.length > 0) && (
               <TimeSlotsSidebar
                 isControlledByHours={isControlledByHours}
@@ -236,7 +393,7 @@ export function CalendarScheduler() {
         </div>
 
         <div className="lg:col-span-2">
-          <ScheduleForm 
+          <ScheduleForm
             startTime={startTime}
             setStartTime={setStartTime}
             endTime={endTime}
@@ -262,13 +419,27 @@ export function CalendarScheduler() {
           />
         </div>
       </div>
+      
+      {isLoading && createdSchedules.length === 0 && (
+        <div className="mt-8 text-center text-gray-500">
+          <p>Carregando agendas...</p>
+        </div>
+      )}
+      
       {createdSchedules.length > 0 && (
         <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Agendas Criadas</h3>
           <SchedulesList
             schedules={createdSchedules}
             onEdit={handleEditSchedule}
             onDelete={handleDeleteSchedule}
           />
+        </div>
+      )}
+      
+      {!isLoading && createdSchedules.length === 0 && (
+        <div className="mt-8 text-center text-gray-400">
+          <p>Nenhuma agenda criada ainda</p>
         </div>
       )}
     </>
