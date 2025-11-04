@@ -30,7 +30,7 @@ export function CalendarScheduler() {
     type: 'success' | 'error' | 'warning'
   }>>([])
 
-  // ✅ BUSCAR AGENDAS AO CARREGAR
+  //  BUSCAR AGENDAS AO CARREGAR
   useEffect(() => {
     const loadSchedules = async () => {
       if (!user?.id) return;

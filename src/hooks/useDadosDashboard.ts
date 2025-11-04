@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 interface DadosDashboard {
   profissional: {
     id: string
-    totalPacientes: number
+    numberPatients: number
   }
   taxaPresenca: number
   cancelamentos: number
@@ -19,29 +19,30 @@ export function useDadosDashboard() {
   const dataFim = format(new Date(), 'yyyy-MM-dd')
   const dataInicio = format(subDays(startOfDay(new Date()), 7), 'yyyy-MM-dd')
 
-console.log('Período da consulta:', {
+  console.log('Período da consulta:', {
     dataInicio,
     dataFim,
     userId: user?.id
   })
 
   return useQuery<DadosDashboard>({
-    queryKey: ['dashboard', user?.id],
+    queryKey: ['dashboard', user?.id, dataInicio, dataFim], 
     queryFn: async () => {
       if (!user?.id) {
         throw new Error('Usuário não autenticado')
       }
 
       try {
-         // Log das URLs antes de fazer as chamadas
+        // Log das URLs antes de fazer as chamadas
         console.log('URLs das requisições:', {
-          profissionalUrl: `/professional/${user.id}`,
+          numeroPacientesUrl: `/professionals/number-patients/${user.id}`,
           taxaPresencaUrl: `/professionals/attendance-rate/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`,
           cancelamentosUrl: `/professionals/number-of-cancelations/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`,
           clientesAgendadosUrl: `/professionals/number-schedulings/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`
         })
-        const [profissional, taxaPresenca, cancelamentos, clientesAgendados] = await Promise.all([
-          api.get(`/professional/${user.id}`),
+
+        const [numeroPacientes, taxaPresenca, cancelamentos, clientesAgendados] = await Promise.all([
+          api.get(`/professionals/number-patients/${user.id}`),
           api.get(`/professionals/attendance-rate/${user.id}`, {
             params: { startDay: dataInicio, endDay: dataFim }
           }),
@@ -52,35 +53,35 @@ console.log('Período da consulta:', {
             params: { startDay: dataInicio, endDay: dataFim }
           })
         ])
+  console.log('aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii caraiiiiiiiiiiiiiiiiiiiiiiiiii');
 
         // Log responses for debugging
         console.log('API Responses:', {
-          profissional: profissional.data,
+          numeroPacientes: numeroPacientes.data,
           taxaPresenca: taxaPresenca.data,
           cancelamentos: cancelamentos.data,
           clientesAgendados: clientesAgendados.data
         })
 
-        if (!profissional.data || !taxaPresenca.data || !cancelamentos.data || !clientesAgendados.data) {
-          throw new Error('Missing data in API response')
-        }
-
+        // ✅ RETORNO CORRIGIDO - Seguindo a interface DadosDashboard
         return {
           profissional: {
-            id: profissional.data.id,
-            totalPacientes: profissional.data.totalPatients || 0,
+            id: user.id,
+            numberPatients: numeroPacientes.data?.numberPatients ?? 0
           },
-          taxaPresenca: taxaPresenca.data.attendanceRate || 0,
-          cancelamentos: cancelamentos.data.cancelations || 0,
-          clientesAgendados: clientesAgendados.data.scheduledClients || 0
+          taxaPresenca: taxaPresenca.data?.attendanceRate ?? 0,
+          cancelamentos: cancelamentos.data?.cancelations ?? 0,
+          clientesAgendados: clientesAgendados.data?.scheduledClients ?? 0
         }
       } catch (error) {
         console.error('Erro ao buscar dados do dashboard:', error)
         toast.error('Erro ao carregar os dados do dashboard')
+        
+        // ✅ Retorno em caso de erro também corrigido
         return {
           profissional: {
             id: user.id,
-            totalPacientes: 0,
+            numberPatients: 0
           },
           taxaPresenca: 0,
           cancelamentos: 0,
@@ -89,8 +90,8 @@ console.log('Período da consulta:', {
       }
     },
     enabled: !!user?.id,
-    retry: 1, // Tenta apenas uma vez em caso de falha
-    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
-    refetchOnWindowFocus: false // Não recarrega ao focar a janela
+    retry: 1,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
   })
 }

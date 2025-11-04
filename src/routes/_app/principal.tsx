@@ -14,7 +14,7 @@ function RouteComponent() {
   
   // Se estiver carregando retora zero
   const dashboardData = {
-    totalPacientes: data?.profissional.totalPacientes ?? 0,
+    totalPacientes: data?.profissional.numberPatients ?? 0,
     cancelamentos: data?.cancelamentos ?? 0,
     taxaPresenca: data?.taxaPresenca ?? 0,
     clientesAgendados: data?.clientesAgendados ?? 0,

@@ -8,6 +8,7 @@ export interface ScheduleCreateData {
     averageValue: number;
     observation: string;
     isControlled: boolean;
+    price?: string;
 }
 
 export interface ScheduleResponse {
@@ -35,7 +36,6 @@ const ScheduleService = {
         }
     },
 
-    // ✅ NOVO: Buscar agendas do profissional
     async getSchedules(professionalId: string): Promise<ScheduleResponse[]> {
         try {
             const response = await api.get(`/schedules/${professionalId}`);
@@ -46,7 +46,16 @@ const ScheduleService = {
         }
     },
 
-    // ✅ NOVO: Deletar agenda
+    async getHourlies(scheduleId: string) {
+        try {
+            const response = await api.get(`/hourlies/${scheduleId}`);
+            return response.data.hourlies || response.data || [];
+        } catch (error: any) {
+            console.error('Error fetching hourlies:', error);
+            throw new Error(error.response?.data?.message || 'Erro ao buscar horários');
+        }
+    },
+
     async deleteSchedule(scheduleId: string) {
         try {
             const response = await api.delete(`/schedules/${scheduleId}`);
