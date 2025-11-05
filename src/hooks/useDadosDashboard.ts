@@ -64,15 +64,16 @@ export function useDadosDashboard() {
         })
 
         // ✅ RETORNO CORRIGIDO - Seguindo a interface DadosDashboard
-        return {
-          profissional: {
-            id: user.id,
-            numberPatients: numeroPacientes.data?.numberPatients ?? 0
-          },
-          taxaPresenca: taxaPresenca.data?.attendanceRate ?? 0,
-          cancelamentos: cancelamentos.data?.cancelations ?? 0,
-          clientesAgendados: clientesAgendados.data?.scheduledClients ?? 0
-        }
+
+      return {
+        profissional: {
+          id: user.id,
+          numberPatients: numeroPacientes.data?.numberPatients ?? 0
+        },
+        taxaPresenca: taxaPresenca.data?.attendanceRate ?? 0,
+        cancelamentos: cancelamentos.data?.schedulingsCancel ?? 0, // ✅ Corrigido
+        clientesAgendados: clientesAgendados.data?.schedulingsCount ?? 0 // ✅ Corrigido
+}
       } catch (error) {
         console.error('Erro ao buscar dados do dashboard:', error)
         toast.error('Erro ao carregar os dados do dashboard')

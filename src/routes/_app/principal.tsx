@@ -17,7 +17,7 @@ function RouteComponent() {
     totalPacientes: data?.profissional.numberPatients ?? 0,
     cancelamentos: data?.cancelamentos ?? 0,
     taxaPresenca: data?.taxaPresenca ?? 0,
-    clientesAgendados: data?.clientesAgendados ?? 0,
+    clientesAgendados: data?.clientesAgendados || 0,
   }
 
   return (
