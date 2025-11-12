@@ -7,7 +7,7 @@ interface TimeSlotsSidebarProps {
   generatedTimes: string[]
   customTimes: CustomTime[]
   scheduleId?: string 
-  isEditing?: boolean // Nova prop para controlar expansão
+  isEditing?: boolean
 }
 
 interface HourlySlot {
@@ -23,14 +23,14 @@ export function TimeSlotsSidebar({
   generatedTimes, 
   customTimes,
   scheduleId,
-  isEditing = false // Por padrão, não está editando
+  isEditing = false
 }: TimeSlotsSidebarProps) {
   const [apiHourlies, setApiHourlies] = useState<HourlySlot[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
 
-  const PREVIEW_LIMIT = 6 // Mostrar apenas 6 horários inicialmente
+  const PREVIEW_LIMIT = 6
 
   useEffect(() => {
     if (scheduleId && isControlledByHours) {
@@ -38,7 +38,6 @@ export function TimeSlotsSidebar({
     }
   }, [scheduleId, isControlledByHours])
 
-  // Quando estiver editando, expandir automaticamente
   useEffect(() => {
     if (isEditing) {
       setShowAll(true)
@@ -63,7 +62,7 @@ export function TimeSlotsSidebar({
     }
   }
 
-  // Decidir qual fonte de horários usar
+  // ✅ CORREÇÃO: Usar a propriedade correta de CustomTime
   const allTimes = isControlledByHours
     ? (apiHourlies.length > 0 ? apiHourlies : generatedTimes.map((time, i) => ({ 
         id: `temp-${i}`, 
@@ -74,7 +73,7 @@ export function TimeSlotsSidebar({
       })))
     : customTimes.map((ct, i) => ({ 
         id: `custom-${i}`, 
-        hour: ct.time, 
+        hour: ct.time, // ✅ Usando ct.time que é a propriedade correta
         isOcuped: false,
         scheduleId: scheduleId || '',
         date: ''
@@ -107,7 +106,7 @@ export function TimeSlotsSidebar({
             {displayedTimes.map((hourly) => (
               <div 
                 key={hourly.id} 
-                className={`px-2.5 py-1 rounded text-xs font-medium ${
+                className={`px-2.5 py-1 rounded text-xs font-medium text-center ${
                   hourly.isOcuped 
                     ? 'bg-red-100 text-red-700 border border-red-200' 
                     : 'bg-green-100 text-green-700 border border-green-200'
@@ -117,7 +116,6 @@ export function TimeSlotsSidebar({
               </div>
             ))}
             
-            {/* Botão "+X mais" */}
             {!showAll && !isEditing && remainingCount > 0 && (
               <button
                 onClick={() => setShowAll(true)}
@@ -128,7 +126,6 @@ export function TimeSlotsSidebar({
             )}
           </div>
 
-          {/* Botão "Ver menos" */}
           {showAll && !isEditing && allTimes.length > PREVIEW_LIMIT && (
             <button
               onClick={() => setShowAll(false)}

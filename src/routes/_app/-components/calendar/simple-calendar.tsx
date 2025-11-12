@@ -4,9 +4,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 interface SimpleCalendarProps {
   selectedDates: string[]
   onDateSelect: (date: string) => void
+  showHints?: boolean
 }
 
-export function SimpleCalendar({ selectedDates, onDateSelect }: SimpleCalendarProps) {
+export function SimpleCalendar({ selectedDates, onDateSelect, showHints = false }: SimpleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const today = new Date()
@@ -150,8 +151,8 @@ export function SimpleCalendar({ selectedDates, onDateSelect }: SimpleCalendarPr
         </div>
 
         {/* Indicador de datas selecionadas */}
-        {selectedDates.length > 0 && (
-          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+        {showHints && selectedDates.length > 0 && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100 mb-6">
             <p className="text-sm text-blue-800 font-medium">
               {selectedDates.length} data{selectedDates.length !== 1 ? 's' : ''} selecionada{selectedDates.length !== 1 ? 's' : ''}
             </p>
@@ -162,8 +163,8 @@ export function SimpleCalendar({ selectedDates, onDateSelect }: SimpleCalendarPr
         )}
 
         {/* Dica quando não há datas selecionadas */}
-        {selectedDates.length === 0 && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+        {showHints && selectedDates.length === 0 && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100 mb-6">
             <p className="text-xs text-gray-600">
               Selecione as datas desejadas para criar a agenda
             </p>

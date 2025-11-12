@@ -12,38 +12,122 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Link } from '@tanstack/react-router'
+import { useAuth } from '@/hooks/useAuth'
+import scheduleService from '@/services/scheduleService'
 
 type AppointmentStatus = 'Agendado' | 'cancelled' | 'available'
 
 interface Appointment {
-  id: number
+  id: string
   time: string
   patient: string | null
   status: AppointmentStatus
+  schedulingId?: string
+  pacientId?: string
+}
+
+interface PatientScheduling {
+  pacientId: string
+  schedulingId: string
+  namePacient: string
+  hour: string
 }
 
 export function AppointmentsScheduler() {
+  const { user } = useAuth()
   const [selectedDates, setSelectedDates] = useState<string[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const patients: Array<{ id: string; name: string; age?: number }> = []
   
-  const handleDateSelect = (date: string) => {
+  const handleDateSelect = async (date: string) => {
     setSelectedDates([date])
+    
+    if (!user?.id) {
+      console.warn('⚠️ Usuário não autenticado')
+      return
+    }
+    
+    setIsLoading(true)
+    
+    try {
+      // ✅ CORREÇÃO: Formato correto sem conversão de timezone
+      // A API espera YYYY-MM-DDTHH:mm:ss.sssZ
+      const [year, month, day] = date.split('-').map(Number)
+      
+      // Criar datas locais e converter para ISO mantendo horário local
+      const startDateTime = new Date(year, month - 1, day, 0, 0, 0, 0)
+      const endDateTime = new Date(year, month - 1, day, 23, 59, 59, 999)
+      
+      // Formatar manualmente para evitar conversão de timezone
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const pad3 = (n: number) => String(n).padStart(3, '0')
+      
+      // Formato: YYYY-MM-DDTHH:mm:ss.sssZ (mas com horário local)
+      const startDate = `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`
+      const endDate = `${year}-${pad(month)}-${pad(day)}T23:59:59.999Z`
+      
+      console.log(`🔍 Buscando agendamentos para: ${date}`)
+      console.log(`   Start: ${startDate}`)
+      console.log(`   End: ${endDate}`)
+      console.log(`   Professional ID: ${user.id}`)
+      
+      const schedulings = await scheduleService.getSchedulingsByDateRange(
+        startDate, 
+        endDate, 
+        user.id
+      )
+      
+      console.log('📅 Resposta da API:', schedulings)
+      
+      // Verificar se há dados
+      if (!schedulings || schedulings.length === 0) {
+        console.log('ℹ️ Nenhum agendamento encontrado para esta data')
+        setAppointments([])
+        return
+      }
+      
+      // Log para ver a estrutura do primeiro item
+      console.log('🔍 Primeiro agendamento:', schedulings[0])
+      console.log('   Chaves disponíveis:', Object.keys(schedulings[0]))
+      
+      // Transformar os dados da API em appointments
+      const transformedAppointments: Appointment[] = schedulings.map((scheduling: PatientScheduling) => {
+        console.log('🔄 Mapeando:', { scheduling })
+        return {
+          id: scheduling.schedulingId,
+          time: scheduling.hour,
+          patient: scheduling.namePacient,
+          status: 'Agendado' as AppointmentStatus,
+          schedulingId: scheduling.schedulingId,
+          pacientId: scheduling.pacientId
+        }
+      })
+      
+      // Ordenar por horário
+      transformedAppointments.sort((a, b) => a.time.localeCompare(b.time))
+      
+      console.log(`✅ ${transformedAppointments.length} agendamento(s) carregado(s)`)
+      setAppointments(transformedAppointments)
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar agendamentos:', error)
+      console.error('   Mensagem:', error.message)
+      console.error('   Response:', error.response?.data)
+      
+      // Mostrar erro mais específico
+      if (error.response?.status === 404) {
+        console.log('ℹ️ Nenhum agendamento encontrado (404)')
+      } else if (error.response?.status === 400) {
+        console.error('❌ Parâmetros inválidos (400)')
+      }
+      
+      setAppointments([])
+    } finally {
+      setIsLoading(false)
+    }
   }
   
-  const appointments: Appointment[] = [
-    { id: 1, time: '08:00', patient: 'Juliana Pereira', status: 'Agendado' },
-    { id: 2, time: '09:00', patient: 'Gabriel Lopes', status: 'Agendado' },
-    { id: 3, time: '10:00', patient: 'Luiz Antonio', status: 'cancelled' },
-    { id: 4, time: '11:00', patient: null, status: 'available' },
-    { id: 5, time: '14:00', patient: 'Ana Paula Fernandes', status: 'Agendado' },
-  ]
-
-  const patients = [
-    { id: 1, name: 'Juliana Pereira', age: 34 },
-    { id: 2, name: 'Gabriel Lopes', age: 28 },
-    { id: 3, name: 'Luiz Antonio', age: 52 },
-    { id: 4, name: 'Ana Paula Fernandes', age: 45 },
-  ]
-
   const getStatusBadge = (status: 'Agendado' | 'cancelled' | 'available') => {
     const badges: Record<string, string> = {
       Agendado: 'bg-green-100 text-green-800 border-green-200',
@@ -83,8 +167,27 @@ export function AppointmentsScheduler() {
         <div className="lg:col-span-2 space-y-6">
           <div>
             <h2 className="font-semibold text-lg mb-4">Agendamentos do Dia</h2>
+            
+            {isLoading && (
+              <div className="text-center py-8 text-gray-500">
+                <p>Carregando agendamentos...</p>
+              </div>
+            )}
+            
+            {!isLoading && selectedDates.length === 0 && (
+              <div className="text-center py-8 text-gray-400">
+                <p>Selecione uma data no calendário</p>
+              </div>
+            )}
+            
+            {!isLoading && selectedDates.length > 0 && appointments.length === 0 && (
+              <div className="text-center py-8 text-gray-400">
+                <p>Nenhum agendamento para esta data</p>
+              </div>
+            )}
+            
             <div className="space-y-3">
-              {appointments.map((appointment) => (
+              {!isLoading && appointments.map((appointment) => (
                 <Card
                   key={appointment.id}
                   className={`${
@@ -140,59 +243,73 @@ export function AppointmentsScheduler() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {patients.map((patient) => (
-                  <TableRow key={patient.id}>
-                    <TableCell>{patient.name}</TableCell>
-                    <TableCell>{patient.age} anos</TableCell>
-                    <TableCell>
-                      <Link to="/reports" search={{ patientId: patient.id }}>
-                        <Button variant="link" size="sm" className="gap-2">
-                          <FileText className="w-4 h-4" />
-                          Visualizar Relatórios
-                        </Button>
-                      </Link> 
+                {patients.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-gray-400 py-8">
+                      Nenhum paciente cadastrado
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  patients.map((patient) => (
+                    <TableRow key={patient.id}>
+                      <TableCell>{patient.name}</TableCell>
+                      <TableCell>{patient.age ? `${patient.age} anos` : '-'}</TableCell>
+                      <TableCell>
+                        <Link to="/reports" search={{ patientId: parseInt(patient.id) || 0 }}>
+                          <Button variant="link" size="sm" className="gap-2">
+                            <FileText className="w-4 h-4" />
+                            Visualizar Relatórios
+                          </Button>
+                        </Link> 
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
 
           {/* Versão Mobile - Cards */}
           <div className="md:hidden space-y-3">
-            {patients.map((patient) => (
-              <Card key={patient.id} className="bg-white">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-base text-gray-900 truncate">
-                        {patient.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {patient.age} anos
-                      </p>
-                      <Link
-                        to="/reports"
-                        search={{ patientId: patient.id }}
-                        className="inline-block mt-2"
+            {patients.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                Nenhum paciente cadastrado
+              </div>
+            ) : (
+              patients.map((patient) => (
+                <Card key={patient.id} className="bg-white">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-base text-gray-900 truncate">
+                          {patient.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {patient.age ? `${patient.age} anos` : '-'}
+                        </p>
+                        <Link
+                          to="/reports"
+                          search={{ patientId: parseInt(patient.id) || 0 }}
+                          className="inline-block mt-2"
+                        >
+                          <Button variant="outline" size="sm" className="gap-2 text-xs">
+                            <FileText className="w-3 h-3" />
+                            Ver Relatórios
+                          </Button>
+                        </Link>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-blue-600 shrink-0"
                       >
-                        <Button variant="outline" size="sm" className="gap-2 text-xs">
-                          <FileText className="w-3 h-3" />
-                          Ver Relatórios
-                        </Button>
-                      </Link>
+                        <Download className="w-5 h-5" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-blue-600 shrink-0"
-                    >
-                      <Download className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </section>

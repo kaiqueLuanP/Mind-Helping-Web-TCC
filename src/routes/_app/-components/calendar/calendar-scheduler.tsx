@@ -117,6 +117,10 @@ export function CalendarScheduler() {
       if (customTimes.length === 0) {
         errors.push('Adicione pelo menos um horário de consulta')
       }
+      // Quando não é controlado por horário, usa o primeiro customTime como referência
+      if (customTimes.length > 0 && !customTimes[0].time) {
+        errors.push('Os horários personalizados devem ter hora de início')
+      }
     }
 
     if (cancellationPolicy !== "" && cancellationPolicy < 0) {
@@ -158,15 +162,31 @@ export function CalendarScheduler() {
       
       selectedDates.forEach(selectedDate => {
         const [year, month, day] = selectedDate.split('-').map(Number);
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
+        
+        // Definir horários baseado no tipo de controle
+        let startHour: number, startMinute: number;
+        
+        if (isControlledByHours) {
+          // Usar startTime/endTime do formulário
+          [startHour, startMinute] = startTime.split(':').map(Number);
+        } else {
+          // Usar o primeiro horário customizado
+          if (customTimes.length === 0) return;
+          [startHour, startMinute] = customTimes[0].time.split(':').map(Number);
+        }
         
         // Criar data local
         const initialDate = new Date(year, month - 1, day, startHour, startMinute, 0, 0);
-        const endDate = new Date(year, month - 1, day, endHour, endMinute, 0, 0);
+        // Se não for controlado por horário, a data final é igual à inicial
+        const endDate = isControlledByHours 
+          ? (() => {
+              const [endHour, endMinute] = endTime.split(':').map(Number);
+              return new Date(year, month - 1, day, endHour, endMinute, 0, 0);
+            })()
+          : new Date(year, month - 1, day, startHour, startMinute, 0, 0);
         
         if (initialDate < now) {
-          console.warn(`⚠️ Data no passado ignorada: ${selectedDate} às ${startTime}`);
+          console.warn(`⚠️ Data no passado ignorada: ${selectedDate} às ${startHour}:${startMinute}`);
           pastDates.push(selectedDate);
           return;
         }
@@ -176,11 +196,19 @@ export function CalendarScheduler() {
         
         // Formato: YYYY-MM-DDTHH:mm:ss (SEM o Z no final)
         const initialTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(startHour)}:${pad(startMinute)}:00`;
-        const endTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(endHour)}:${pad(endMinute)}:00`;
+        
+        // Se não for controlado por horário, endTime é igual ao initialTime
+        let endTimeISO: string;
+        if (isControlledByHours) {
+          const [endHour, endMinute] = endTime.split(':').map(Number);
+          endTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(endHour)}:${pad(endMinute)}:00`;
+        } else {
+          endTimeISO = initialTimeISO;
+        }
 
         console.log(`✅ Data futura válida: ${selectedDate}`);
-        console.log(`   ${startTime} (local) -> ${initialTimeISO}`);
-        console.log(`   ${endTime} (local) -> ${endTimeISO}`);
+        console.log(`   Início: ${pad(startHour)}:${pad(startMinute)} (local) -> ${initialTimeISO}`);
+        console.log(`   Fim: ${endTimeISO}`);
 
         futureSchedules.push({
           initialTime: initialTimeISO,
@@ -377,9 +405,10 @@ export function CalendarScheduler() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4 flex flex-col items-center w-full">
           <div className="w-full">
-            <SimpleCalendar
+           <SimpleCalendar 
               selectedDates={selectedDates}
               onDateSelect={handleDateSelect}
+              showHints={true}
             />
 
             {(isControlledByHours ? generatedTimes.length > 0 : customTimes.length > 0) && (

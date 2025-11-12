@@ -64,6 +64,37 @@ const ScheduleService = {
             console.error('Error deleting schedule:', error);
             throw new Error(error.response?.data?.message || 'Erro ao deletar agendamento');
         }
+    },
+
+    async getSchedulingsByProfessional(professionalId: string) {
+        try {
+            const response = await api.get(`/schedulings/professional/${professionalId}`);
+            return response.data.schedulings || response.data || [];
+        } catch (error: any) {
+            console.error('Error fetching professional schedulings:', error);
+            throw new Error(error.response?.data?.message || 'Erro ao buscar agendamentos dos pacientes');
+        }
+    },
+
+    async getSchedulingsByDateRange(startDate: string, endDate: string, professionalId: string) {
+        try {
+            console.log(`📡 Chamando API com:`, { startDate, endDate, professionalId })
+            const response = await api.get(`/schedulings/professional/${professionalId}`, {
+                params: {
+                    startDate: startDate,
+                    endDate: endDate
+                }
+            })
+            console.log(`📦 Resposta completa da API:`, response.data)
+            
+            // A API retorna um array direto ou dentro de schedulings
+            const schedulings = Array.isArray(response.data) ? response.data : (response.data.schedulings || response.data || []);
+            console.log(`✅ Agendamentos extraídos:`, schedulings)
+            return schedulings;
+        } catch (error: any) {
+            console.error('Error fetching schedulings by date range:', error);
+            throw new Error(error.response?.data?.message || 'Erro ao buscar agendamentos por período');
+        }
     }
 };
 
