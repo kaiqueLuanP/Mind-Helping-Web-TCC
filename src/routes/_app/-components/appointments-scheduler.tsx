@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SimpleCalendar } from './calendar/simple-calendar'
 import { FileText, Download, User } from 'lucide-react'
 import {
@@ -38,7 +38,31 @@ export function AppointmentsScheduler() {
   const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [scheduleIds, setScheduleIds] = useState<string[]>([])
   const patients: Array<{ id: string; name: string; age?: number }> = []
+  
+  // ✅ Buscar os scheduleIds do profissional ao carregar o componente
+  useEffect(() => {
+    const fetchScheduleIds = async () => {
+      if (!user?.id) return
+      
+      try {
+        const schedules = await scheduleService.getSchedules(user.id)
+        
+        if (schedules && schedules.length > 0) {
+          const ids = schedules.map((s: { id: string }) => s.id)
+          setScheduleIds(ids)
+          console.log('✅ ScheduleIds carregados:', ids)
+        } else {
+          console.warn('⚠️ Profissional não possui agenda cadastrada')
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar scheduleIds:', error)
+      }
+    }
+    
+    fetchScheduleIds()
+  }, [user?.id])
   
   const handleDateSelect = async (date: string) => {
     setSelectedDates([date])
@@ -48,52 +72,50 @@ export function AppointmentsScheduler() {
       return
     }
     
+    if (scheduleIds.length === 0) {
+      console.warn('⚠️ Nenhuma agenda encontrada para este profissional')
+      setAppointments([])
+      return
+    }
+    
     setIsLoading(true)
     
     try {
-      // ✅ CORREÇÃO: Formato correto sem conversão de timezone
-      // A API espera YYYY-MM-DDTHH:mm:ss.sssZ
       const [year, month, day] = date.split('-').map(Number)
-      
-      // Criar datas locais e converter para ISO mantendo horário local
-      const startDateTime = new Date(year, month - 1, day, 0, 0, 0, 0)
-      const endDateTime = new Date(year, month - 1, day, 23, 59, 59, 999)
-      
-      // Formatar manualmente para evitar conversão de timezone
       const pad = (n: number) => String(n).padStart(2, '0')
-      const pad3 = (n: number) => String(n).padStart(3, '0')
       
-      // Formato: YYYY-MM-DDTHH:mm:ss.sssZ (mas com horário local)
       const startDate = `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`
       const endDate = `${year}-${pad(month)}-${pad(day)}T23:59:59.999Z`
       
-      console.log(`🔍 Buscando agendamentos para: ${date}`)
-      console.log(`   Start: ${startDate}`)
-      console.log(`   End: ${endDate}`)
-      console.log(`   Professional ID: ${user.id}`)
-      
-      const schedulings = await scheduleService.getSchedulingsByDateRange(
-        startDate, 
-        endDate, 
-        user.id
+      // ✅ Buscar agendamentos de TODAS as agendas do profissional
+      const allSchedulings = await Promise.all(
+        scheduleIds.map(scheduleId => 
+          scheduleService.getSchedulingsByDateRange(startDate, endDate, scheduleId)
+            .catch(err => {
+              console.error(`Erro ao buscar agendamentos da agenda ${scheduleId}:`, err)
+              return [] // Retorna array vazio se falhar
+            })
+        )
       )
       
-      console.log('📅 Resposta da API:', schedulings)
+      // Juntar todos os agendamentos em um único array
+      const schedulings = allSchedulings.flat()
       
-      // Verificar se há dados
-      if (!schedulings || schedulings.length === 0) {
-        console.log('ℹ️ Nenhum agendamento encontrado para esta data')
+      // ✅ PROTEÇÃO: Verificar se response é array antes de usar
+      if (!Array.isArray(schedulings)) {
+        console.warn('⚠️ Resposta não é um array:', schedulings)
         setAppointments([])
         return
       }
       
-      // Log para ver a estrutura do primeiro item
-      console.log('🔍 Primeiro agendamento:', schedulings[0])
-      console.log('   Chaves disponíveis:', Object.keys(schedulings[0]))
+      // Verificar se há dados
+      if (schedulings.length === 0) {
+        setAppointments([])
+        return
+      }
       
-      // Transformar os dados da API em appointments
+      // ✅ Transformar os dados da API em appointments
       const transformedAppointments: Appointment[] = schedulings.map((scheduling: PatientScheduling) => {
-        console.log('🔄 Mapeando:', { scheduling })
         return {
           id: scheduling.schedulingId,
           time: scheduling.hour,
@@ -107,34 +129,23 @@ export function AppointmentsScheduler() {
       // Ordenar por horário
       transformedAppointments.sort((a, b) => a.time.localeCompare(b.time))
       
-      console.log(`✅ ${transformedAppointments.length} agendamento(s) carregado(s)`)
       setAppointments(transformedAppointments)
       
     } catch (error: any) {
       console.error('❌ Erro ao buscar agendamentos:', error)
-      console.error('   Mensagem:', error.message)
-      console.error('   Response:', error.response?.data)
-      
-      // Mostrar erro mais específico
-      if (error.response?.status === 404) {
-        console.log('ℹ️ Nenhum agendamento encontrado (404)')
-      } else if (error.response?.status === 400) {
-        console.error('❌ Parâmetros inválidos (400)')
-      }
-      
       setAppointments([])
     } finally {
       setIsLoading(false)
     }
   }
   
-  const getStatusBadge = (status: 'Agendado' | 'cancelled' | 'available') => {
-    const badges: Record<string, string> = {
+  const getStatusBadge = (status: AppointmentStatus) => {
+    const badges: Record<AppointmentStatus, string> = {
       Agendado: 'bg-green-100 text-green-800 border-green-200',
       cancelled: 'bg-red-100 text-red-800 border-red-200',
       available: 'bg-gray-100 text-gray-700 border-gray-200',
     }
-    const labels: Record<string, string> = {
+    const labels: Record<AppointmentStatus, string> = {
       Agendado: 'Agendada',
       cancelled: 'Cancelada',
       available: 'Disponível',
@@ -153,10 +164,7 @@ export function AppointmentsScheduler() {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
           Agendamentos Realizados
         </h1>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <User className="w-5 h-5" />
-        </Button>
-      </div>
+      </div> 
 
       {/* GRID: Calendar + Agendamentos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">

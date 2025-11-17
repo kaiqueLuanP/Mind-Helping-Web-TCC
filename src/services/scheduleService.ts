@@ -65,37 +65,41 @@ const ScheduleService = {
             throw new Error(error.response?.data?.message || 'Erro ao deletar agendamento');
         }
     },
-
-    async getSchedulingsByProfessional(professionalId: string) {
-        try {
-            const response = await api.get(`/schedulings/professional/${professionalId}`);
-            return response.data.schedulings || response.data || [];
-        } catch (error: any) {
-            console.error('Error fetching professional schedulings:', error);
-            throw new Error(error.response?.data?.message || 'Erro ao buscar agendamentos dos pacientes');
-        }
-    },
-
-    async getSchedulingsByDateRange(startDate: string, endDate: string, professionalId: string) {
-        try {
-            console.log(`📡 Chamando API com:`, { startDate, endDate, professionalId })
-            const response = await api.get(`/schedulings/professional/${professionalId}`, {
-                params: {
-                    startDate: startDate,
-                    endDate: endDate
-                }
-            })
-            console.log(`📦 Resposta completa da API:`, response.data)
+// chamando api
+    async getSchedulingsByDateRange(startDate: string, endDate: string, scheduleId: string) {
+    try {
+        console.log(`🔡 Chamando API com:`, { startDate, endDate, scheduleId })
+        
+        // CORRETO: usar /schedulings/schedule/ ao invés de /schedulings/professional/
+        const response = await api.get(`/schedulings/schedule/${scheduleId}`, {
+            params: {
+                startDate: startDate,
+                endDate: endDate
+            }
+        })
+        
+        console.log(`📦 Resposta completa da API:`, response.data)
+        
+        // Garantir que sempre retorna um array, mesmo se vazio
+        const schedulings = Array.isArray(response.data) 
+            ? response.data 
+            : (response.data?.schedulings || []);
             
-            // A API retorna um array direto ou dentro de schedulings
-            const schedulings = Array.isArray(response.data) ? response.data : (response.data.schedulings || response.data || []);
-            console.log(`✅ Agendamentos extraídos:`, schedulings)
-            return schedulings;
-        } catch (error: any) {
-            console.error('Error fetching schedulings by date range:', error);
-            throw new Error(error.response?.data?.message || 'Erro ao buscar agendamentos por período');
+        console.log(`✅ Agendamentos extraídos:`, schedulings)
+        return schedulings;
+        
+    } catch (error: any) {
+        console.error('Error fetching schedulings by date range:', error);
+        
+        // Se for 404, retornar array vazio ao invés de erro
+        if (error.response?.status === 404) {
+            console.log('⚠️ Nenhum agendamento encontrado (404), retornando array vazio')
+            return [];
         }
+        
+        throw new Error(error.response?.data?.message || 'Erro ao buscar agendamentos por período');
     }
+} 
 };
 
 export default ScheduleService;
