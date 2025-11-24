@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Layout from '../../components/Layout' 
-import { AppointmentsScheduler } from './-components/appointments-scheduler'  
+import { AppointmentsScheduler } from './-components/appointments/appointments-scheduler'  
 export const Route = createFileRoute('/_app/patients')({
   component: PatientsComponent,
 })

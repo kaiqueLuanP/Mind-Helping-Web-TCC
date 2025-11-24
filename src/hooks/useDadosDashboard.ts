@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/axios'
-import { startOfDay, subDays, format } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 
@@ -16,12 +16,15 @@ interface DadosDashboard {
 
 export function useDadosDashboard() {
   const { user } = useAuth()
-  const dataFim = format(new Date(), 'yyyy-MM-dd')
-  const dataInicio = format(subDays(startOfDay(new Date()), 7), 'yyyy-MM-dd')
+  
+  // ✅ CORREÇÃO: Invertido e usando subDays
+  const dataFim = format(new Date(), 'yyyy-MM-dd')                // Hoje
+  const dataInicio = format(subDays(new Date(), 7), 'yyyy-MM-dd')  // 7 dias atrás
 
-  console.log('Período da consulta:', {
-    dataInicio,
-    dataFim,
+  console.log('📅 Período da consulta:', {
+    dataInicio,  
+    dataFim,    
+    diasAtras: 7,
     userId: user?.id
   })
 
@@ -34,7 +37,7 @@ export function useDadosDashboard() {
 
       try {
         // Log das URLs antes de fazer as chamadas
-        console.log('URLs das requisições:', {
+        console.log('🔗 URLs das requisições:', {
           numeroPacientesUrl: `/professionals/number-patients/${user.id}`,
           taxaPresencaUrl: `/professionals/attendance-rate/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`,
           cancelamentosUrl: `/professionals/number-of-cancelations/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`,
@@ -53,32 +56,28 @@ export function useDadosDashboard() {
             params: { startDay: dataInicio, endDay: dataFim }
           })
         ])
-  console.log('aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii caraiiiiiiiiiiiiiiiiiiiiiiiiii');
 
         // Log responses for debugging
-        console.log('API Responses:', {
+        console.log('📊 Respostas da API:', {
           numeroPacientes: numeroPacientes.data,
           taxaPresenca: taxaPresenca.data,
           cancelamentos: cancelamentos.data,
           clientesAgendados: clientesAgendados.data
         })
 
-        // ✅ RETORNO CORRIGIDO - Seguindo a interface DadosDashboard
-
-      return {
-        profissional: {
-          id: user.id,
-          numberPatients: numeroPacientes.data?.numberPatients ?? 0
-        },
-        taxaPresenca: taxaPresenca.data?.attendanceRate ?? 0,
-        cancelamentos: cancelamentos.data?.schedulingsCancel ?? 0, // ✅ Corrigido
-        clientesAgendados: clientesAgendados.data?.schedulingsCount ?? 0 // ✅ Corrigido
-}
+        return {
+          profissional: {
+            id: user.id,
+            numberPatients: numeroPacientes.data?.numberPatients ?? 0
+          },
+          taxaPresenca: taxaPresenca.data?.attendanceRate ?? 0,
+          cancelamentos: cancelamentos.data?.schedulingsCancel ?? 0,
+          clientesAgendados: clientesAgendados.data?.schedulingsCount ?? 0
+        }
       } catch (error) {
-        console.error('Erro ao buscar dados do dashboard:', error)
+        console.error('❌ Erro ao buscar dados do dashboard:', error)
         toast.error('Erro ao carregar os dados do dashboard')
         
-        // ✅ Retorno em caso de erro também corrigido
         return {
           profissional: {
             id: user.id,

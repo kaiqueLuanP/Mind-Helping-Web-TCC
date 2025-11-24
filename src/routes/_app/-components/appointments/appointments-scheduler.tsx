@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useState, useEffect } from 'react'
-import { SimpleCalendar } from './calendar/simple-calendar'
-import { FileText, Download, User } from 'lucide-react'
+import { SimpleCalendar } from '../calendar/simple-calendar'
+import { FileText, Download } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -14,6 +14,9 @@ import {
 import { Link } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 import scheduleService from '@/services/scheduleService'
+import { useAppointmentConfirmation } from '@/hooks/useAppointmentConfirmation'
+import { AppointmentConfirmationModal } from './appointment-confirmation-modal'
+import { PendingConfirmationBadge } from './pending-confirmation-badge'
 
 type AppointmentStatus = 'Agendado' | 'cancelled' | 'available'
 
@@ -24,6 +27,7 @@ interface Appointment {
   status: AppointmentStatus
   schedulingId?: string
   pacientId?: string
+  confirmed?: boolean
 }
 
 interface PatientScheduling {
@@ -41,7 +45,19 @@ export function AppointmentsScheduler() {
   const [scheduleIds, setScheduleIds] = useState<string[]>([])
   const patients: Array<{ id: string; name: string; age?: number }> = []
   
-  // ✅ Buscar os scheduleIds do profissional ao carregar o componente
+  // Hook de confirmação
+  const {
+    pendingConfirmations,
+    showModal,
+    setShowModal,
+    confirmAppointment,
+    confirmMultiple,
+    markAsNoShow,
+    isConfirmed,
+    isNoShow,
+    getConfirmationStatus,
+  } = useAppointmentConfirmation(appointments, selectedDates[0] || null)
+  
   useEffect(() => {
     const fetchScheduleIds = async () => {
       if (!user?.id) return
@@ -52,7 +68,6 @@ export function AppointmentsScheduler() {
         if (schedules && schedules.length > 0) {
           const ids = schedules.map((s: { id: string }) => s.id)
           setScheduleIds(ids)
-          console.log('✅ ScheduleIds carregados:', ids)
         } else {
           console.warn('⚠️ Profissional não possui agenda cadastrada')
         }
@@ -87,34 +102,29 @@ export function AppointmentsScheduler() {
       const startDate = `${year}-${pad(month)}-${pad(day)}T00:00:00.000Z`
       const endDate = `${year}-${pad(month)}-${pad(day)}T23:59:59.999Z`
       
-      // ✅ Buscar agendamentos de TODAS as agendas do profissional
       const allSchedulings = await Promise.all(
         scheduleIds.map(scheduleId => 
           scheduleService.getSchedulingsByDateRange(startDate, endDate, scheduleId)
             .catch(err => {
               console.error(`Erro ao buscar agendamentos da agenda ${scheduleId}:`, err)
-              return [] // Retorna array vazio se falhar
+              return []
             })
         )
       )
       
-      // Juntar todos os agendamentos em um único array
       const schedulings = allSchedulings.flat()
       
-      // ✅ PROTEÇÃO: Verificar se response é array antes de usar
       if (!Array.isArray(schedulings)) {
         console.warn('⚠️ Resposta não é um array:', schedulings)
         setAppointments([])
         return
       }
       
-      // Verificar se há dados
       if (schedulings.length === 0) {
         setAppointments([])
         return
       }
       
-      // ✅ Transformar os dados da API em appointments
       const transformedAppointments: Appointment[] = schedulings.map((scheduling: PatientScheduling) => {
         return {
           id: scheduling.schedulingId,
@@ -122,11 +132,11 @@ export function AppointmentsScheduler() {
           patient: scheduling.namePacient,
           status: 'Agendado' as AppointmentStatus,
           schedulingId: scheduling.schedulingId,
-          pacientId: scheduling.pacientId
+          pacientId: scheduling.pacientId,
+          confirmed: false,
         }
       })
       
-      // Ordenar por horário
       transformedAppointments.sort((a, b) => a.time.localeCompare(b.time))
       
       setAppointments(transformedAppointments)
@@ -157,13 +167,69 @@ export function AppointmentsScheduler() {
     )
   }
 
+  // ✅ Badge baseado no status de confirmação
+  const getConfirmationBadge = (appointmentId: string) => {
+    const status = getConfirmationStatus(appointmentId)
+    
+    if (status === 'confirmed') {
+      return (
+        <span className="text-xs font-medium py-1 px-3 rounded-full border bg-blue-100 text-blue-800 border-blue-200">
+          ✓ Confirmada
+        </span>
+      )
+    }
+    
+    if (status === 'no-show') {
+      return (
+        <span className="text-xs font-medium py-1 px-3 rounded-full border bg-red-100 text-red-800 border-red-200">
+          ✗ Faltou
+        </span>
+      )
+    }
+    
+    return null
+  }
+
+  const isPending = (appointmentId: string) => {
+    return pendingConfirmations.some(apt => apt.id === appointmentId)
+  }
+
+  const getPendingMinutes = (appointmentId: string) => {
+    const pending = pendingConfirmations.find(apt => apt.id === appointmentId)
+    return pending?.minutesPassed || 0
+  }
+
   return (
     <div className="space-y-6 w-full">
+      {/* Modal de Confirmação */}
+      <AppointmentConfirmationModal
+        open={showModal}
+        onOpenChange={setShowModal}
+        pendingAppointments={pendingConfirmations}
+        onConfirm={confirmAppointment}
+        onConfirmAll={confirmMultiple}
+        onMarkAsNoShow={markAsNoShow}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
           Agendamentos Realizados
         </h1>
+        
+        {pendingConfirmations.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => setShowModal(true)}
+            className="gap-2 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100"
+          >
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+            </span>
+            {pendingConfirmations.length} pendente{pendingConfirmations.length > 1 ? 's' : ''}
+          </Button>
+        )}
       </div> 
 
       {/* GRID: Calendar + Agendamentos */}
@@ -195,47 +261,72 @@ export function AppointmentsScheduler() {
             )}
             
             <div className="space-y-3">
-              {!isLoading && appointments.map((appointment) => (
-                <Card
-                  key={appointment.id}
-                  className={`${
-                    appointment.status === 'cancelled' ? 'opacity-60' : ''
-                  } ${
-                    appointment.status === 'available'
-                      ? 'border-2 border-dashed hover:border-blue-500 cursor-pointer transition-colors'
-                      : ''
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <span className="font-medium text-gray-600 w-12 text-right shrink-0 text-sm">
-                          {appointment.time}
-                        </span>
-                        <div className="w-px h-6 bg-gray-200" />
-                        <span
-                          className={`font-semibold truncate ${
-                            appointment.status === 'cancelled'
-                              ? 'text-gray-500 line-through'
-                              : appointment.status === 'available'
-                              ? 'text-gray-500 font-medium'
-                              : 'text-gray-900'
-                          }`}
-                        >
-                          {appointment.patient || 'Sem agendamento'}
-                        </span>
-                      </div>
-                      <div className="shrink-0">{getStatusBadge(appointment.status)}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {!isLoading && appointments.map((appointment) => {
+                const confirmationStatus = getConfirmationStatus(appointment.id)
+                const hasConfirmationStatus = confirmationStatus !== null
+                
+                return (
+                  <div key={appointment.id}>
+                    <Card
+                      className={`${
+                        appointment.status === 'cancelled' ? 'opacity-60' : ''
+                      } ${
+                        appointment.status === 'available'
+                          ? 'border-2 border-dashed hover:border-blue-500 cursor-pointer transition-colors'
+                          : ''
+                      } ${
+                        isPending(appointment.id) ? 'border-l-4 border-l-orange-500' : ''
+                      } ${
+                        confirmationStatus === 'no-show' ? 'border-l-4 border-l-red-500' : ''
+                      } ${
+                        confirmationStatus === 'confirmed' ? 'border-l-4 border-l-blue-500' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <span className="font-medium text-gray-600 w-12 text-right shrink-0 text-sm">
+                              {appointment.time}
+                            </span>
+                            <div className="w-px h-6 bg-gray-200" />
+                            <span
+                              className={`font-semibold truncate ${
+                                appointment.status === 'cancelled' || confirmationStatus === 'no-show'
+                                  ? 'text-gray-500 line-through'
+                                  : appointment.status === 'available'
+                                  ? 'text-gray-500 font-medium'
+                                  : 'text-gray-900'
+                              }`}
+                            >
+                              {appointment.patient || 'Sem agendamento'}
+                            </span>
+                          </div>
+                          <div className="shrink-0">
+                            {hasConfirmationStatus ? (
+                              getConfirmationBadge(appointment.id)
+                            ) : (
+                              getStatusBadge(appointment.status)
+                            )}
+                          </div>
+                        </div>
+
+                        {isPending(appointment.id) && !hasConfirmationStatus && (
+                          <PendingConfirmationBadge
+                            minutesPassed={getPendingMinutes(appointment.id)}
+                            onConfirm={() => confirmAppointment(appointment.id)}
+                            onMarkAsNoShow={() => markAsNoShow(appointment.id)}
+                          />
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      
       <section className="w-full">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="font-semibold text-lg mb-4">Todos os Pacientes</h2>
