@@ -14,12 +14,12 @@ interface DadosDashboard {
   clientesAgendados: number
 }
 
-export function useDadosDashboard() {
+export function useDadosDashboard(filtroDataInicio?: string, filtroDataFim?: string) {
   const { user } = useAuth()
   
-  // ✅ CORREÇÃO: Invertido e usando subDays
-  const dataFim = format(new Date(), 'yyyy-MM-dd')                // Hoje
-  const dataInicio = format(subDays(new Date(), 7), 'yyyy-MM-dd')  // 7 dias atrás
+  // ✅ CORREÇÃO: Invertido e usando subDays (ou filtro customizado)
+  const dataFim = filtroDataFim || format(new Date(), 'yyyy-MM-dd')                // Hoje ou data filtrada
+  const dataInicio = filtroDataInicio || format(subDays(new Date(), 7), 'yyyy-MM-dd')  // 7 dias atrás ou data filtrada
 
   console.log('📅 Período da consulta:', {
     dataInicio,  

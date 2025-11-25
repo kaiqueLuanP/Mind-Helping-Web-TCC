@@ -78,31 +78,17 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Bem-vindo de Volta !</CardTitle>
-          <CardDescription>
-            Login com a sua conta Google
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className={cn("login-form flex flex-col gap-6", className)} {...props}>
-              <div className="grid gap-6">
-                <div className="flex flex-col gap-4">
-                  <Button 
-                    type="button"
-                    variant="default" 
-                    className="w-full text-white"
-                    disabled={isLoading}
-                  >
-                    Login com Google
-                  </Button>
+              <div className="grid ">
+                <div className="flex flex-col">
                 </div>
               </div>
 
               <div className="relative flex items-center text-sm text-center">
                 <span className="flex-1 h-px bg-border"></span> 
-                <span className="px-2 bg-card text-muted-foreground z-10">
-                  Ou Continue Com
-                </span>
                 <span className="flex-1 h-px bg-border"></span>
               </div>
 

@@ -13,9 +13,18 @@ export interface CardsProps {
     indicator: string
     description: string
     icon: LucideIcon
+    dataInicio?: string
+    dataFim?: string
 }
 
-export function CardIndicatorDashboard({ title, indicator, description, icon: Icon }: CardsProps) {
+export function CardIndicatorDashboard({ 
+    title, 
+    indicator, 
+    description, 
+    icon: Icon,
+    dataInicio,
+    dataFim
+}: CardsProps) {
     return (
         <Card className="@container/card shadow border border-zinc-100 h-46">
             <CardHeader>

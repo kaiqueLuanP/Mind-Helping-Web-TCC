@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useState, useEffect } from 'react'
 import { SimpleCalendar } from '../calendar/simple-calendar'
-import { FileText, Download } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -15,8 +15,9 @@ import { Link } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 import scheduleService from '@/services/scheduleService'
 import { useAppointmentConfirmation } from '@/hooks/useAppointmentConfirmation'
-import { AppointmentConfirmationModal } from './appointment-confirmation-modal'
-import { PendingConfirmationBadge } from './pending-confirmation-badge'
+import { AppointmentConfirmationModal } from '../appointments/appointment-confirmation-modal'
+import { PendingConfirmationBadge } from '../appointments/pending-confirmation-badge'
+import { api } from '@/lib/axios'
 
 type AppointmentStatus = 'Agendado' | 'cancelled' | 'available'
 
@@ -37,13 +38,27 @@ interface PatientScheduling {
   hour: string
 }
 
+// ✅ Interface do paciente
+interface Patient {
+  patientId: string
+  patientName: string
+  patientAge: number
+}
+
+interface PatientsResponse {
+  patients: Patient[]
+}
+
 export function AppointmentsScheduler() {
   const { user } = useAuth()
   const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [scheduleIds, setScheduleIds] = useState<string[]>([])
-  const patients: Array<{ id: string; name: string; age?: number }> = []
+  
+  // ✅ Estado para pacientes
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [loadingPatients, setLoadingPatients] = useState(false)
   
   // Hook de confirmação
   const {
@@ -53,8 +68,6 @@ export function AppointmentsScheduler() {
     confirmAppointment,
     confirmMultiple,
     markAsNoShow,
-    isConfirmed,
-    isNoShow,
     getConfirmationStatus,
   } = useAppointmentConfirmation(appointments, selectedDates[0] || null)
   
@@ -77,6 +90,58 @@ export function AppointmentsScheduler() {
     }
     
     fetchScheduleIds()
+  }, [user?.id])
+
+  // ✅ BUSCAR PACIENTES - Usando API diretamente
+  useEffect(() => {
+    const fetchPatients = async () => {
+      if (!user?.id) {
+        console.warn('⚠️ Usuário não autenticado, não buscando pacientes')
+        return
+      }
+      
+      console.log('🔍 Iniciando busca de pacientes...')
+      console.log('🔍 ID do profissional:', user.id)
+      
+      setLoadingPatients(true)
+      
+      try {
+        console.log('🔄 [API CALL] Buscando pacientes do profissional:', user.id)
+        console.log('🔄 [API CALL] URL:', `/professionals/patients/${user.id}`)
+        
+        const response = await api.get<PatientsResponse>(
+          `/professionals/patients/${user.id}`
+        )
+        
+        console.log('✅ [API RESPONSE] Resposta completa:', response.data)
+        console.log('✅ [API RESPONSE] Status:', response.status)
+        
+        const patientsData = response.data?.patients || []
+        
+        console.log('✅ Pacientes extraídos:', patientsData)
+        console.log('✅ Total de pacientes:', patientsData.length)
+        
+        setPatients(patientsData)
+        
+      } catch (error: any) {
+        console.error('❌ [API ERROR] Erro ao buscar pacientes:', error)
+        console.error('❌ [API ERROR] Status:', error?.response?.status)
+        console.error('❌ [API ERROR] Data:', error?.response?.data)
+        console.error('❌ [API ERROR] Message:', error?.message)
+        
+        // Se for 404, não é erro crítico
+        if (error?.response?.status === 404) {
+          console.log('⚠️ [API] Nenhum paciente encontrado (404) - Isso é normal')
+        }
+        
+        setPatients([])
+      } finally {
+        setLoadingPatients(false)
+        console.log('🏁 Busca de pacientes finalizada')
+      }
+    }
+    
+    fetchPatients()
   }, [user?.id])
   
   const handleDateSelect = async (date: string) => {
@@ -167,7 +232,6 @@ export function AppointmentsScheduler() {
     )
   }
 
-  // ✅ Badge baseado no status de confirmação
   const getConfirmationBadge = (appointmentId: string) => {
     const status = getConfirmationStatus(appointmentId)
     
@@ -327,89 +391,105 @@ export function AppointmentsScheduler() {
         </div>
       </div>
 
+      {/* SEÇÃO DE PACIENTES */}
       <section className="w-full">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="font-semibold text-lg mb-4">Todos os Pacientes</h2>
-
-          {/* Versão Desktop - Tabela */}
-          <div className="hidden md:block bg-white rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Paciente</TableHead>
-                  <TableHead>Idade</TableHead>
-                  <TableHead>Relatórios</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {patients.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-gray-400 py-8">
-                      Nenhum paciente cadastrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  patients.map((patient) => (
-                    <TableRow key={patient.id}>
-                      <TableCell>{patient.name}</TableCell>
-                      <TableCell>{patient.age ? `${patient.age} anos` : '-'}</TableCell>
-                      <TableCell>
-                        <Link to="/reports" search={{ patientId: parseInt(patient.id) || 0 }}>
-                          <Button variant="link" size="sm" className="gap-2">
-                            <FileText className="w-4 h-4" />
-                            Visualizar Relatórios
-                          </Button>
-                        </Link> 
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Versão Mobile - Cards */}
-          <div className="md:hidden space-y-3">
-            {patients.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                Nenhum paciente cadastrado
-              </div>
-            ) : (
-              patients.map((patient) => (
-                <Card key={patient.id} className="bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-base text-gray-900 truncate">
-                          {patient.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          {patient.age ? `${patient.age} anos` : '-'}
-                        </p>
-                        <Link
-                          to="/reports"
-                          search={{ patientId: parseInt(patient.id) || 0 }}
-                          className="inline-block mt-2"
-                        >
-                          <Button variant="outline" size="sm" className="gap-2 text-xs">
-                            <FileText className="w-3 h-3" />
-                            Ver Relatórios
-                          </Button>
-                        </Link>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-blue-600 shrink-0"
-                      >
-                        <Download className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+        <div className=" mx-auto px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Todos os Pacientes</h2>
+            {!loadingPatients && patients.length > 0 && (
+              <span className="text-sm text-gray-500">
+                {patients.length} paciente{patients.length !== 1 ? 's' : ''}
+              </span>
             )}
           </div>
+
+          {/* Loading State */}
+          {loadingPatients && (
+            <div className="text-center py-8 text-gray-500">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <p className="mt-2">Carregando pacientes...</p>
+            </div>
+          )}
+
+          {/* Versão Desktop - Tabela */}
+          {!loadingPatients && (
+            <div className="hidden md:block bg-white rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Paciente</TableHead>
+                    <TableHead>Idade</TableHead>
+                    <TableHead>Relatórios</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {patients.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-400 py-8">
+                        Nenhum paciente cadastrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    patients.map((patient) => (
+                      <TableRow key={patient.patientId}>
+                        <TableCell className="font-medium">{patient.patientName}</TableCell>
+                        <TableCell>{patient.patientAge} anos</TableCell>
+                        <TableCell>
+                          <Link 
+                            to="/reports" 
+                            search={{ patientId: patient.patientId }}
+                          >
+                            <Button variant="link" size="sm" className="gap-2 text-blue-600">
+                              <FileText className="w-4 h-4" />
+                              Visualizar Relatórios
+                            </Button>
+                          </Link> 
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Versão Mobile - Cards */}
+          {!loadingPatients && (
+            <div className="md:hidden space-y-3">
+              {patients.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  Nenhum paciente cadastrado
+                </div>
+              ) : (
+                patients.map((patient) => (
+                  <Card key={patient.patientId} className="bg-white">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-base text-gray-900 truncate">
+                            {patient.patientName}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            {patient.patientAge} anos
+                          </p>
+                          <Link
+                            to="/reports"
+                            search={{ patientId: patient.patientId }}
+                            className="inline-block mt-2"
+                          >
+                            <Button variant="outline" size="sm" className="gap-2 text-xs">
+                              <FileText className="w-3 h-3" />
+                              Ver Relatórios
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
     </div>

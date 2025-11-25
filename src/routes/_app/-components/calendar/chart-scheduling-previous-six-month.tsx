@@ -13,16 +13,66 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
+import { useDadosGraficoUltimos6Meses } from '@/hooks/useDadosGraficoUltimos6Meses'
+import { Input } from '@/components/ui/input'
+import { CalendarIcon } from 'lucide-react'
 
-export function ChartSchedulingPreviousSixMonths() {
-    const chartData = [
-        { month: "Janiero", patient: 20 },
-        { month: "Fevereiro", patient: 22 },
-        { month: "Março", patient: 17 },
-        { month: "Abril", patient: 19 },
-        { month: "Maio", patient: 25 },
-        { month: "Junho", patient: 35 },
-    ]
+interface ChartSchedulingPreviousSixMonthsProps {
+  dataInicio: string
+  dataFim: string
+  onDataInicioChange: (data: string) => void
+  onDataFimChange: (data: string) => void
+}
+
+// Função para formatar o número do mês em nome completo
+function formatarMesCompleto(numeroMes: number): string {
+  const meses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ]
+  return meses[numeroMes - 1]
+}
+
+// Função para obter o ano atual
+function obterAnoAtual(): string {
+  return new Date().getFullYear().toString()
+}
+
+// Função para converter data YYYY-MM-DD para número do mês
+function extrairMesDaData(dataStr: string): number {
+  const partes = dataStr.split('-')
+  return parseInt(partes[1])
+}
+
+export function ChartSchedulingPreviousSixMonths({
+  dataInicio,
+  dataFim,
+  onDataInicioChange,
+  onDataFimChange
+}: ChartSchedulingPreviousSixMonthsProps) {
+    const { data, isLoading, error } = useDadosGraficoUltimos6Meses()
+
+    // Formata os dados da API para o formato do gráfico
+    let chartData = data?.map(item => ({
+        month: formatarMesCompleto(item.month),
+        patient: item.count,
+        mesNumero: item.month
+    })) ?? []
+
+    // Filtra dados baseado no período selecionado
+    if (dataInicio && dataFim) {
+      const mesInicio = extrairMesDaData(dataInicio)
+      const mesFim = extrairMesDaData(dataFim)
+      
+      chartData = chartData.filter(item => 
+        item.mesNumero >= mesInicio && item.mesNumero <= mesFim
+      )
+    }
+
+    // Determina o período dinamicamente
+    const periodo = chartData.length > 0 && data
+        ? `${chartData[0].month} - ${chartData[chartData.length - 1].month} ${obterAnoAtual()}`
+        : 'Janeiro - Junho 2025'
 
     const chartConfig = {
         patient: {
@@ -31,53 +81,118 @@ export function ChartSchedulingPreviousSixMonths() {
         },
     } satisfies ChartConfig
 
-
-
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Pacientes atendidos nos últimos 6 meses</CardTitle>
-                <CardDescription>Janeiro - Junho 2025</CardDescription>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex-1">
+                        <CardTitle>Pacientes atendidos nos últimos 6 meses</CardTitle>
+                        <CardDescription>{periodo}</CardDescription>
+                    </div>
+                    
+                    {/* Filtro de período sutil */}
+                    <div className="flex gap-2 items-center flex-wrap md:flex-nowrap">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <CalendarIcon className="w-3 h-3" />
+                            <span>Filtrar:</span>
+                        </div>
+                        <Input
+                            type="date"
+                            value={dataInicio}
+                            onChange={(e) => onDataInicioChange(e.target.value)}
+                            className="h-8 w-28 text-xs"
+                            placeholder="Data inicial"
+                        />
+                        <span className="text-xs text-muted-foreground">até</span>
+                        <Input
+                            type="date"
+                            value={dataFim}
+                            onChange={(e) => onDataFimChange(e.target.value)}
+                            className="h-8 w-28 text-xs"
+                            placeholder="Data final"
+                        />
+                        {(dataInicio || dataFim) && (
+                            <button
+                                onClick={() => {
+                                    onDataInicioChange('')
+                                    onDataFimChange('')
+                                }}
+                                className="h-8 px-2 text-xs rounded hover:bg-muted transition-colors"
+                            >
+                                Limpar
+                            </button>
+                        )}
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
-                <ChartContainer config={chartConfig} className="h-[350px] w-full">
-                    <LineChart
-                        accessibilityLayer
-                        data={chartData}
-                        margin={{
-                            left: 12,
-                            right: 12,
-                        }}
-                    >
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="month"
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                            tickFormatter={(value) => value.slice(0, 3)}
-                        />
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
-                        />
-                        <Line
-                            dataKey="patient"
-                            type="natural"
-                            stroke="var(--color-patient)"
-                            strokeWidth={2}
-                            dot={{
-                                fill: "var(--primary-foreground)",
+                {isLoading && (
+                    <div className="h-[450px] flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm text-muted-foreground">Carregando dados...</p>
+                        </div>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="h-[450px] flex items-center justify-center">
+                        <div className="text-center">
+                            <p className="text-destructive font-medium mb-1">Erro ao carregar dados do gráfico</p>
+                            <p className="text-sm text-muted-foreground">Tente novamente mais tarde</p>
+                        </div>
+                    </div>
+                )}
+
+                {!isLoading && !error && chartData.length > 0 && (
+                    <ChartContainer config={chartConfig} className="h-[450px] w-full">
+                        <LineChart
+                            accessibilityLayer
+                            data={chartData}
+                            margin={{
+                                left: 12,
+                                right: 12,
+                                top: 20,
+                                bottom: 20,
                             }}
-                            activeDot={{
-                                r: 6,
-                            }}
-                        />
-                    </LineChart>
-                </ChartContainer>
+                        >
+                            <CartesianGrid vertical={false} />
+                            <XAxis
+                                dataKey="month"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                tickFormatter={(value) => value.slice(0, 3)}
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent hideLabel />}
+                            />
+                            <Line
+                                dataKey="patient"
+                                type="natural"
+                                stroke="var(--color-patient)"
+                                strokeWidth={2}
+                                dot={{
+                                    fill: "var(--primary-foreground)",
+                                }}
+                                activeDot={{
+                                    r: 6,
+                                }}
+                            />
+                        </LineChart>
+                    </ChartContainer>
+                )}
+
+                {!isLoading && !error && chartData.length === 0 && (
+                    <div className="h-[450px] flex items-center justify-center">
+                        <p className="text-muted-foreground">Nenhum dado disponível para exibir</p>
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="flex-col items-start gap-2 text-sm">
                 <span className="text-muted-foreground">Mind Helping Profissional &copy; 2025</span>
             </CardFooter>
-        </Card>)
+        </Card>
+    )
 }

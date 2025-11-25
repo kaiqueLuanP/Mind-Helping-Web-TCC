@@ -5,31 +5,17 @@ import Layout from '../../components/Layout'
 import { MoodVariationChart } from './-components/reports/mood-variation-chart'
 import { MoodDonutChart } from './-components/reports/mood-donut-chart'
 import { AppointmentList } from './-components/reports/appointment-list'
-import { useState, useMemo } from 'react'
-import { DateValue } from "react-aria-components"
-import { CalendarDate } from "@internationalized/date"
+import { useState } from 'react'
 
-// Tipos
-interface Patient {
-  id: number
-  name: string
-  age: number
-}
-
-// Mock de dados dos pacientes
-const patients: Patient[] = [
-  { id: 1, name: 'Márcio Pessoa', age: 32 },
-  { id: 2, name: 'Gabriel Lopes de Souza', age: 24 },
-  { id: 3, name: 'Luiz Antonio de Oliveira', age: 18 },
-  { id: 4, name: 'Ana Paula Fernandes', age: 19 },
-  { id: 5, name: 'Elvira Alves da Silva', age: 38 },
-]
 
 // Validação de parâmetros de busca
 const reportSearchSchema = {
   patientId: (value: unknown) => {
-    const num = Number(value)
-    return !isNaN(num) && num > 0 ? num : undefined
+    console.log('🔍 Validando patientId:', value, 'tipo:', typeof value)
+    // Se for string UUID ou número, aceita
+    const result = typeof value === 'string' && value.length > 0 ? value : undefined
+    console.log('✅ Resultado da validação:', result)
+    return result
   }
 }
 
@@ -44,27 +30,23 @@ export const Route = createFileRoute('/_app/reports')({
 
 function ReportsComponent() {
   const { patientId } = Route.useSearch()
-  const [selectedDate, setSelectedDate] = useState<DateValue>(new CalendarDate(2025, 10, 9))
   const [moodStartDate, setMoodStartDate] = useState('2025-03-15')
   const [moodEndDate, setMoodEndDate] = useState('2025-03-20')
 
-  // Buscar paciente pelo ID
-  const selectedPatient = useMemo(() => {
-    if (!patientId) return null
-    return patients.find(p => p.id === patientId) || null
-  }, [patientId])
+  // Log para debug
+  console.log('📋 Reports - patientId:', patientId)
 
   return (
     <Layout>
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          {selectedPatient ? (
+          {patientId ? (
             <>
               <h1 className="font-medium text-xl md:text-2xl">
-                Paciente: {selectedPatient.name}
+                Relatório do Paciente
               </h1>
-              <p className="text-sm text-gray-500">Idade: {selectedPatient.age}</p>
+              <p className="text-sm text-gray-500">ID: {patientId}</p>
             </>
           ) : (
             <>
@@ -83,14 +65,18 @@ function ReportsComponent() {
           {/* Gráfico de Variação diária de sentimento */}
           <div className="rounded-lg">
             <MoodVariationChart 
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
+              userId={patientId?.toString() || null}
+              startDate={moodStartDate}
+              endDate={moodEndDate}
+              onStartDateChange={setMoodStartDate}
+              onEndDateChange={setMoodEndDate}
             />
           </div>
 
           {/* Gráfico de Relatório de humor */}
           <div className="rounded-lg">
             <MoodDonutChart
+              userId={patientId?.toString() || null}
               startDate={moodStartDate}
               endDate={moodEndDate}
               onStartDateChange={setMoodStartDate}
@@ -100,7 +86,7 @@ function ReportsComponent() {
 
           {/* Controle de chamada CVV */}
           <div className="lg:col-span-2 rounded-lg p-6">
-            <AppointmentList />
+            <AppointmentList userId={patientId?.toString() || null} />
           </div>
         </div>
       </div>
