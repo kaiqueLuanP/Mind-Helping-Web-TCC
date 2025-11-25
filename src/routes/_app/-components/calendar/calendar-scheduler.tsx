@@ -138,7 +138,9 @@ export function CalendarScheduler() {
     )
   }
 
-  const handleCreateSchedule = async () => {
+ // ✅ SUBSTITUA a função handleCreateSchedule completa por esta versão corrigida:
+
+const handleCreateSchedule = async () => {
     const validation = validateForm()
 
     if (!validation.isValid) {
@@ -157,71 +159,35 @@ export function CalendarScheduler() {
 
     try {
       const now = new Date();
-      const futureSchedules: ScheduleCreateData[] = [];
+      const futureDates: string[] = [];
       const pastDates: string[] = [];
       
+      // ✅ Filtrar datas futuras
       selectedDates.forEach(selectedDate => {
         const [year, month, day] = selectedDate.split('-').map(Number);
         
-        // Definir horários baseado no tipo de controle
         let startHour: number, startMinute: number;
         
         if (isControlledByHours) {
-          // Usar startTime/endTime do formulário
           [startHour, startMinute] = startTime.split(':').map(Number);
         } else {
-          // Usar o primeiro horário customizado
           if (customTimes.length === 0) return;
+          // Para modo livre, usar o primeiro horário customizado como referência
           [startHour, startMinute] = customTimes[0].time.split(':').map(Number);
         }
         
-        // Criar data local
         const initialDate = new Date(year, month - 1, day, startHour, startMinute, 0, 0);
-        // Se não for controlado por horário, a data final é igual à inicial
-        const endDate = isControlledByHours 
-          ? (() => {
-              const [endHour, endMinute] = endTime.split(':').map(Number);
-              return new Date(year, month - 1, day, endHour, endMinute, 0, 0);
-            })()
-          : new Date(year, month - 1, day, startHour, startMinute, 0, 0);
         
         if (initialDate < now) {
-          console.warn(`⚠️ Data no passado ignorada: ${selectedDate} às ${startHour}:${startMinute}`);
+          console.warn(`⚠️ Data no passado ignorada: ${selectedDate}`);
           pastDates.push(selectedDate);
-          return;
-        }
-        
-        // ✅ CORREÇÃO DEFINITIVA: Criar string ISO mantendo o horário local
-        const pad = (n: number) => String(n).padStart(2, '0');
-        
-        // Formato: YYYY-MM-DDTHH:mm:ss (SEM o Z no final)
-        const initialTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(startHour)}:${pad(startMinute)}:00`;
-        
-        // Se não for controlado por horário, endTime é igual ao initialTime
-        let endTimeISO: string;
-        if (isControlledByHours) {
-          const [endHour, endMinute] = endTime.split(':').map(Number);
-          endTimeISO = `${year}-${pad(month)}-${pad(day)}T${pad(endHour)}:${pad(endMinute)}:00`;
         } else {
-          endTimeISO = initialTimeISO;
+          console.log(`✅ Data futura válida: ${selectedDate}`);
+          futureDates.push(selectedDate);
         }
-
-        console.log(`✅ Data futura válida: ${selectedDate}`);
-        console.log(`   Início: ${pad(startHour)}:${pad(startMinute)} (local) -> ${initialTimeISO}`);
-        console.log(`   Fim: ${endTimeISO}`);
-
-        futureSchedules.push({
-          initialTime: initialTimeISO,
-          endTime: endTimeISO,
-          interval: intervalMinutes,
-          cancellationPolicy: cancellationPolicy === "" ? 0 : Number(cancellationPolicy),
-          averageValue: price ? parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.')) : 0,
-          observation: observations || "",
-          isControlled: isControlledByHours
-        });
       });
 
-      if (futureSchedules.length === 0) {
+      if (futureDates.length === 0) {
         addToast('Todas as datas selecionadas estão no passado. Selecione datas futuras.', 'error');
         setIsLoading(false);
         return;
@@ -231,13 +197,56 @@ export function CalendarScheduler() {
         addToast(`${pastDates.length} data(s) no passado foram ignoradas.`, 'warning');
       }
 
-      console.log('📤 Enviando para API:', JSON.stringify(futureSchedules, null, 2));
-      
-      const response = await scheduleService.createSchedule(user.id, futureSchedules);
-      console.log('✅ Resposta da API:', response);
+      // ✅ Preparar dados do schedule
+      const scheduleData = {
+        interval: intervalMinutes,
+        cancellationPolicy: cancellationPolicy === "" ? 0 : Number(cancellationPolicy),
+        averageValue: price ? parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.')) : 0,
+        observation: observations || "",
+        isControlled: isControlledByHours
+      };
 
-      // ✅ RECARREGAR AGENDAS APÓS CRIAR
+      // ✅ Definir start/end time baseado no modo
+      let scheduleStartTime: string;
+      let scheduleEndTime: string;
+
+      if (isControlledByHours) {
+        // MODO CONTROLADO: Usar startTime e endTime do formulário
+        scheduleStartTime = startTime;
+        scheduleEndTime = endTime;
+        console.log('⏰ Modo CONTROLADO:', { scheduleStartTime, scheduleEndTime, interval: intervalMinutes });
+      } else {
+        // MODO LIVRE: Usar primeiro e último horário customizado
+        const sortedTimes = [...customTimes].sort((a, b) => a.time.localeCompare(b.time));
+        scheduleStartTime = sortedTimes[0].time;
+        scheduleEndTime = sortedTimes[sortedTimes.length - 1].time;
+        console.log('🎯 Modo LIVRE:', { 
+          scheduleStartTime, 
+          scheduleEndTime, 
+          customTimes: customTimes.map(ct => ct.time) 
+        });
+      }
+
+      console.log('🚀 Criando schedules + hourlies...');
+      
+      // ✅ Criar schedule + hourlies (com suporte a horários customizados)
+      const response = await scheduleService.createScheduleWithHourlies(
+        user.id,
+        scheduleData,
+        futureDates,
+        scheduleStartTime,
+        scheduleEndTime,
+        // ✅ IMPORTANTE: Passar horários customizados quando não for controlado
+        isControlledByHours ? undefined : customTimes.map(ct => ct.time)
+      );
+      
+      console.log('✅ Resposta completa:', response);
+
+      // ✅ Recarregar agendas após criar
       try {
+        // Aguardar um pouco mais para garantir que os hourlies foram criados
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const updatedSchedules = await scheduleService.getSchedules(user.id);
         console.log('🔄 Agendas recarregadas:', updatedSchedules);
         
@@ -262,13 +271,17 @@ export function CalendarScheduler() {
           });
           
           setCreatedSchedules(mappedSchedules);
+          console.log('✅ Agendas atualizadas no estado');
         }
       } catch (reloadError) {
         console.warn('⚠️ Não foi possível recarregar agendas, mas criação foi bem-sucedida');
       }
       
       clearForm();
-      addToast(`Agenda criada com sucesso para ${futureSchedules.length} dia(s)!`, 'success');
+      
+      // ✅ Mensagem de sucesso diferente para cada modo
+      const modoTexto = isControlledByHours ? 'horários automáticos' : 'horários customizados';
+      addToast(`Agenda criada com sucesso para ${futureDates.length} dia(s) com ${modoTexto}!`, 'success');
 
     } catch (error: any) {
       console.error('❌ ERRO COMPLETO:', error);

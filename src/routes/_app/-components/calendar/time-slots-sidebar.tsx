@@ -32,11 +32,14 @@ export function TimeSlotsSidebar({
 
   const PREVIEW_LIMIT = 6
 
+  // ✅ CORREÇÃO: Buscar hourlies SEMPRE que houver scheduleId, independente do modo
   useEffect(() => {
-    if (scheduleId && isControlledByHours) {
+    if (scheduleId) {
+      console.log('🔍 [SIDEBAR] Buscando hourlies para schedule:', scheduleId);
+      console.log('🔍 [SIDEBAR] Modo:', isControlledByHours ? 'CONTROLADO' : 'LIVRE');
       fetchHourlies()
     }
-  }, [scheduleId, isControlledByHours])
+  }, [scheduleId]) // ✅ Removido isControlledByHours da dependência
 
   useEffect(() => {
     if (isEditing) {
@@ -51,42 +54,71 @@ export function TimeSlotsSidebar({
     setError(null)
 
     try {
+      console.log('📤 [SIDEBAR] Chamando API /hourlies/' + scheduleId);
       const data = await scheduleService.getHourlies(scheduleId)
+      console.log('📦 [SIDEBAR] Hourlies recebidos:', data);
+      console.log('📦 [SIDEBAR] Quantidade:', data.length);
       setApiHourlies(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
-      console.error('❌ Erro ao buscar hourlies:', err)
+      console.error('❌ [SIDEBAR] Erro ao buscar hourlies:', err)
       setError(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
-  // ✅ CORREÇÃO: Usar a propriedade correta de CustomTime
-  const allTimes = isControlledByHours
-    ? (apiHourlies.length > 0 ? apiHourlies : generatedTimes.map((time, i) => ({ 
-        id: `temp-${i}`, 
-        hour: time, 
-        isOcuped: false,
-        scheduleId: scheduleId || '',
-        date: ''
-      })))
-    : customTimes.map((ct, i) => ({ 
-        id: `custom-${i}`, 
-        hour: ct.time, // ✅ Usando ct.time que é a propriedade correta
-        isOcuped: false,
-        scheduleId: scheduleId || '',
-        date: ''
-      }))
+  // ✅ Determinar quais horários exibir
+  let allTimes: HourlySlot[] = [];
+
+  if (apiHourlies.length > 0) {
+    // ✅ Se tem hourlies da API, usar eles (SEMPRE - controlado ou livre)
+    console.log('✅ [SIDEBAR] Usando hourlies da API:', apiHourlies.length);
+    allTimes = apiHourlies;
+  } else if (isControlledByHours && generatedTimes.length > 0) {
+    // ✅ Fallback: horários gerados localmente (modo controlado)
+    console.log('⚠️ [SIDEBAR] Usando horários gerados localmente:', generatedTimes.length);
+    allTimes = generatedTimes.map((time, i) => ({ 
+      id: `temp-${i}`, 
+      hour: time, 
+      isOcuped: false,
+      scheduleId: scheduleId || '',
+      date: ''
+    }));
+  } else if (!isControlledByHours && customTimes.length > 0) {
+    // ✅ Fallback: horários customizados locais (modo livre)
+    console.log('⚠️ [SIDEBAR] Usando horários customizados locais:', customTimes.length);
+    allTimes = customTimes.map((ct, i) => ({ 
+      id: `custom-${i}`, 
+      hour: ct.time,
+      isOcuped: false,
+      scheduleId: scheduleId || '',
+      date: ''
+    }));
+  }
 
   const displayedTimes = showAll || isEditing ? allTimes : allTimes.slice(0, PREVIEW_LIMIT)
   const remainingCount = allTimes.length - PREVIEW_LIMIT
 
   return (
     <div className="bg-white border rounded-lg shadow-sm p-3">
-      <h4 className="font-medium text-sm mb-2 text-gray-700">
-        {isControlledByHours ? 'Horários gerados' : 'Horários customizados'}
-      </h4>
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-medium text-sm text-gray-700">
+          {isControlledByHours ? 'Horários gerados' : 'Horários customizados'}
+        </h4>
+        
+        {/* ✅ Botão de refresh manual */}
+        {scheduleId && (
+          <button
+            onClick={fetchHourlies}
+            disabled={loading}
+            className="text-xs text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+            title="Atualizar horários"
+          >
+            {loading ? '🔄' : '↻'}
+          </button>
+        )}
+      </div>
 
       {loading && (
         <div className="text-center text-gray-500 text-xs py-2">
@@ -138,9 +170,11 @@ export function TimeSlotsSidebar({
       ) : (
         !loading && !error && (
           <div className="text-center text-gray-400 text-xs py-2">
-            {isControlledByHours
+            {scheduleId 
               ? 'Nenhum horário disponível'
-              : 'Adicione horários manualmente'
+              : isControlledByHours
+                ? 'Configure horário inicial e final'
+                : 'Adicione horários manualmente'
             }
           </div>
         )
