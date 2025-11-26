@@ -14,9 +14,9 @@ function Hero() {
               Conectamos você a profissionais qualificados para cuidar da sua saúde mental, quando e onde você precisar.
             </p>
             <div className="flex justify-between items-center gap-x-2">
-              <Button type="button" className="w-full bg-blue-600 text-white px-6 rounded-lg text-base font-semibold hover:bg-blue-700 transition-colors">
+              <Button type="button" variant="outline" className="w-full border-2 border-blue-600 text-white px-6 rounded-lg text-base font-semibold bg-blue-600">
                 Começar agora
-              </Button>
+              </Button >
               <Button type="button" variant="outline" className="w-full border-2 border-blue-600 text-blue-600 px-6 rounded-lg text-base font-semibold">
                 Saiba mais
               </Button>

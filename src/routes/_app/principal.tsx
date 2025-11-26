@@ -60,7 +60,7 @@ function RouteComponent() {
             <CardIndicatorDashboard 
               title="Cancelamentos" 
               indicator={String(dashboardData.cancelamentos)} 
-              description="Agendamentos que foram cancelados nos próximos dias" 
+              description="Agendamentos que foram cancelados" 
               icon={X} 
               dataInicio={dataInicio}
               dataFim={dataFim}

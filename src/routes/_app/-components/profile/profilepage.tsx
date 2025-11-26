@@ -10,7 +10,8 @@ import { Loader2, Camera, Check } from 'lucide-react';
 import ProfessionalService from '@/services/professionalService';
 import api from '@/api/api';
 import { useAuth } from '@/hooks/useAuth';
-import professionalService from '@/services/professionalService';
+import { maskCPF, maskPhone, maskCEP, maskCRP, removeMask } from '@/utils/masks';
+import { buscarCEP } from '@/services/viaCepService';
 
 interface ProfileData {
   id: string;
@@ -35,6 +36,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoadingCEP, setIsLoadingCEP] = useState(false);
 
   const { user } = useAuth();
 
@@ -49,67 +51,46 @@ export default function ProfilePage() {
       
       console.log('========== DADOS DA API ==========');
       console.log('Dados completos:', JSON.stringify(profile, null, 2));
-      console.log('birthDate:', profile.birthDate);
-      console.log('cep:', profile.cep);
-      console.log('cepUser:', profile.cepUser);
-      console.log('crp:', profile.crp);
-      console.log('cpf:', profile.cpf);
-      console.log('id:', profile.id);
-      console.log('idauth:', user?.id);
       console.log('==================================');
       
-      // Mapeia os dados da API para o formato do componente
-  if (profile) {
-  // Define o tipo esperado do endereço
-  interface AddressData {
-    street?: string;
-    neighborhood?: string;
-    number?: number;
-    complement?: string;
-    cep?: string;
-    city?: string;
-    uf?: string;
-  }
+      if (profile) {
+        interface AddressData {
+          street?: string;
+          neighborhood?: string;
+          number?: number;
+          complement?: string;
+          cep?: string;
+          city?: string;
+          uf?: string;
+        }
 
-  // Corrige caso o backend retorne o endereço como objeto
-  const addressData: AddressData =
-    profile && typeof profile.address === 'object' && profile.address !== null
-      ? (profile.address as AddressData)
-      : {};
+        const addressData: AddressData =
+          profile && typeof profile.address === 'object' && profile.address !== null
+            ? (profile.address as AddressData)
+            : {};
 
-  // Mapeia os dados, garantindo valores padrão seguros
-  const mappedData = {
-    id: profile.id ,
-    name: profile.name ??  '',
-    email: profile.email ?? '',
-    cpf: profile.cpf ?? '',
-    phone: profile.phone ?? '',
-    crp: profile.crp ?? '',
-    birthDate: (profile.birthDate || profile.birth_date)
-    ? new Date(profile.birthDate || profile.birth_date).toISOString().split('T')[0]
-    : '',
-    address: addressData.street ?? profile.address ?? '',
-    number: addressData.number ?? profile.number ?? 0,
-    cep: addressData.cep ?? profile.cep ?? profile.cepUser ?? '',
-    uf: addressData.uf ?? profile.uf ?? '',
-    city: addressData.city ?? profile.city ?? '',
-    neighborhood: addressData.neighborhood ?? profile.neighborhood ?? '',
-    complement: addressData.complement ?? profile.complement ?? '',
-    voluntary: profile.voluntary ?? false
-  };
+        const mappedData = {
+          id: profile.id,
+          name: profile.name ?? '',
+          email: profile.email ?? '',
+          cpf: profile.cpf ?? '',
+          phone: profile.phone ?? '',
+          crp: profile.crp ?? '',
+          birthDate: (profile.birthDate || profile.birth_date)
+            ? new Date(profile.birthDate || profile.birth_date).toISOString().split('T')[0]
+            : '',
+          address: addressData.street ?? profile.address ?? '',
+          number: addressData.number ?? profile.number ?? 0,
+          cep: addressData.cep ?? profile.cep ?? profile.cepUser ?? '',
+          uf: addressData.uf ?? profile.uf ?? '',
+          city: addressData.city ?? profile.city ?? '',
+          neighborhood: addressData.neighborhood ?? profile.neighborhood ?? '',
+          complement: addressData.complement ?? profile.complement ?? '',
+          voluntary: profile.voluntary ?? false
+        };
 
-  console.log('========== DADOS MAPEADOS ==========');
-  console.log('birthDate final:', mappedData.birthDate);
-  console.log('cep final:', mappedData.cep);
-  console.log('crp final:', mappedData.crp);
-  console.log('cpf final:', mappedData.cpf);
-  console.log('address final:', mappedData.address);
-  console.log('====================================');
-
-  setProfileData(mappedData);
-}
-
-
+        setProfileData(mappedData);
+      }
     } catch (error: any) {
       console.error('Erro ao carregar perfil:', error);
       toast.error('Erro ao carregar perfil');
@@ -118,12 +99,66 @@ export default function ProfilePage() {
     }
   };
 
+  // Função para construir o endereço completo
+  const buildFullAddress = (data: ProfileData) => {
+    const parts = [
+      data.address,
+      data.number ? `nº ${data.number}` : '',
+      data.complement || '',
+    ].filter(Boolean);
+    return parts.join(', ');
+  };
+
   const handleInputChange = (field: keyof ProfileData, value: string | number | boolean) => {
     if (!profileData) return;
-    setProfileData({
+    
+    const updatedData = {
       ...profileData,
       [field]: value
-    });
+    };
+
+    // Se mudou campos relacionados ao endereço, atualiza o endereço completo
+    if (['address', 'number', 'complement', 'neighborhood', 'city'].includes(field)) {
+      // Mantém o campo individual atualizado
+    }
+
+    setProfileData(updatedData);
+  };
+
+  // Buscar CEP automaticamente
+  const handleCEPChange = async (cep: string) => {
+    if (!profileData) return;
+
+    const maskedCEP = maskCEP(cep);
+    handleInputChange('cep', maskedCEP);
+
+    const cepLimpo = removeMask(maskedCEP);
+    
+    if (cepLimpo.length === 8) {
+      setIsLoadingCEP(true);
+      try {
+        const endereco = await buscarCEP(maskedCEP);
+        
+        if (endereco) {
+          setProfileData(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              address: endereco.logradouro || prev.address,
+              neighborhood: endereco.bairro || prev.neighborhood,
+              city: endereco.localidade || prev.city,
+              uf: endereco.uf || prev.uf,
+              complement: endereco.complemento || prev.complement,
+            };
+          });
+          toast.success('Endereço encontrado!');
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'Erro ao buscar CEP');
+      } finally {
+        setIsLoadingCEP(false);
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -135,25 +170,23 @@ export default function ProfilePage() {
       // Prepara os dados exatamente como a API espera com snake_case
       const updateData = {
         name: profileData.name,
-        birth_date: profileData.birthDate, // snake_case!
-        phone: profileData.phone,
+        birth_date: profileData.birthDate,
+        phone: removeMask(profileData.phone), // Remove máscara
         email: profileData.email,
-        cpf: profileData.cpf,
+        cpf: removeMask(profileData.cpf), // Remove máscara
         voluntary: profileData.voluntary,
         address: profileData.address,
         neighborhood: profileData.neighborhood,
         number: profileData.number,
         complement: profileData.complement || '',
-        cepUser: profileData.cep, 
+        cepUser: removeMask(profileData.cep), // Remove máscara
         city: profileData.city,
         uf: profileData.uf
       };
 
       console.log('Dados sendo enviados para API:', updateData);
 
-      // Usa PATCH no endpoint correto
-      await api.patch(`/professionals/${user.id}`, updateData); 
-      
+      await api.patch(`/professionals/${user.id}`, updateData);
 
       toast.success('Perfil atualizado com sucesso!');
       setIsEditing(false);
@@ -170,21 +203,6 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     ProfessionalService.logout();
-  };
-
-  const formatCPF = (cpf: string | undefined) => {
-    if (!cpf) return '';
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  };
-
-  const formatPhone = (phone: string | undefined) => {
-    if (!phone) return '';
-    return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  };
-
-  const formatCEP = (cep: string | undefined) => {
-    if (!cep) return '';
-    return cep.replace(/(\d{5})(\d{3})/, '$1-$2');
   };
 
   const formatDate = (date: string) => {
@@ -246,7 +264,7 @@ export default function ProfilePage() {
               <div>
                 <CardTitle className="text-2xl">{profileData.name}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Psicólogo • CRP {profileData.crp}
+                  Psicólogo • CRP {maskCRP(profileData.crp)}
                 </p>
               </div>
             </div>
@@ -298,7 +316,7 @@ export default function ProfilePage() {
                 <div>
                   <Label className="text-muted-foreground">CPF</Label>
                   <Input
-                    value={profileData.cpf}
+                    value={maskCPF(profileData.cpf)}
                     disabled
                     className="mt-1 bg-gray-100 cursor-not-allowed"
                     title="Este campo não pode ser alterado"
@@ -309,13 +327,14 @@ export default function ProfilePage() {
                   <Label className="text-muted-foreground">Telefone</Label>
                   {isEditing ? (
                     <Input
-                      value={profileData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      value={maskPhone(profileData.phone)}
+                      onChange={(e) => handleInputChange('phone', maskPhone(e.target.value))}
                       className="mt-1"
-                      maxLength={11}
+                      maxLength={15}
+                      placeholder="(11) 99999-9999"
                     />
                   ) : (
-                    <p className="mt-1 font-medium">{formatPhone(profileData.phone)}</p>
+                    <p className="mt-1 font-medium">{maskPhone(profileData.phone)}</p>
                   )}
                 </div>
               </div>
@@ -330,7 +349,7 @@ export default function ProfilePage() {
                 <div>
                   <Label className="text-muted-foreground">CRP</Label>
                   <Input
-                    value={profileData.crp}
+                    value={maskCRP(profileData.crp)}
                     disabled
                     className="mt-1 bg-gray-100 cursor-not-allowed"
                     title="Este campo não pode ser alterado"
@@ -373,15 +392,95 @@ export default function ProfilePage() {
               <Separator />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="sm:col-span-2">
                   <Label className="text-muted-foreground">CEP</Label>
-                  <Input
-                    value={profileData.cep}
-                    disabled
-                    className="mt-1 bg-gray-100 cursor-not-allowed"
-                    placeholder="00000-000"
-                    title="Este campo não pode ser alterado"
-                  />
+                  {isEditing ? (
+                    <div className="relative">
+                      <Input
+                        value={maskCEP(profileData.cep)}
+                        onChange={(e) => handleCEPChange(e.target.value)}
+                        className="mt-1"
+                        maxLength={9}
+                        placeholder="00000-000"
+                      />
+                      {isLoadingCEP && (
+                        <Loader2 className="absolute right-3 top-3.5 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-1 font-medium">{maskCEP(profileData.cep)}</p>
+                  )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Label className="text-muted-foreground">Endereço (Rua/Avenida)</Label>
+                  {isEditing ? (
+                    <Input
+                      value={profileData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      className="mt-1"
+                      placeholder="Nome da rua"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{profileData.address}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-muted-foreground">Número</Label>
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={profileData.number}
+                      onChange={(e) => handleInputChange('number', parseInt(e.target.value) || 0)}
+                      className="mt-1"
+                      placeholder="123"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{profileData.number}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-muted-foreground">Complemento</Label>
+                  {isEditing ? (
+                    <Input
+                      value={profileData.complement || ''}
+                      onChange={(e) => handleInputChange('complement', e.target.value)}
+                      className="mt-1"
+                      placeholder="Apto, bloco, etc."
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{profileData.complement || '-'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-muted-foreground">Bairro</Label>
+                  {isEditing ? (
+                    <Input
+                      value={profileData.neighborhood}
+                      onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+                      className="mt-1"
+                      placeholder="Nome do bairro"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{profileData.neighborhood}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-muted-foreground">Cidade</Label>
+                  {isEditing ? (
+                    <Input
+                      value={profileData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      className="mt-1"
+                      placeholder="Nome da cidade"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{profileData.city}</p>
+                  )}
                 </div>
 
                 <div>
@@ -399,71 +498,12 @@ export default function ProfilePage() {
                   )}
                 </div>
 
+                {/* Endereço Completo - Apenas visualização */}
                 <div className="sm:col-span-2">
-                  <Label className="text-muted-foreground">Endereço</Label>
-                  {isEditing ? (
-                    <Input
-                      value={profileData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{profileData.address}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-muted-foreground">Número</Label>
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={profileData.number}
-                      onChange={(e) => handleInputChange('number', parseInt(e.target.value) || 0)}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{profileData.number}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-muted-foreground">Bairro</Label>
-                  {isEditing ? (
-                    <Input
-                      value={profileData.neighborhood}
-                      onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{profileData.neighborhood}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-muted-foreground">Cidade</Label>
-                  {isEditing ? (
-                    <Input
-                      value={profileData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{profileData.city}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-muted-foreground">Complemento</Label>
-                  {isEditing ? (
-                    <Input
-                      value={profileData.complement || ''}
-                      onChange={(e) => handleInputChange('complement', e.target.value)}
-                      className="mt-1"
-                      placeholder="Opcional"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{profileData.complement || '-'}</p>
-                  )}
+                  <Label className="text-muted-foreground">Endereço Completo</Label>
+                  <p className="mt-1 font-medium text-sm">
+                    {buildFullAddress(profileData)}, {profileData.neighborhood} - {profileData.city}/{profileData.uf}
+                  </p>
                 </div>
               </div>
             </div>

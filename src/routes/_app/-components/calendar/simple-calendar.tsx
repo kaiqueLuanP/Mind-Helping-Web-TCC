@@ -5,9 +5,15 @@ interface SimpleCalendarProps {
   selectedDates: string[]
   onDateSelect: (date: string) => void
   showHints?: boolean
+  allowPastDates?: boolean // Nova prop para controlar datas passadas
 }
 
-export function SimpleCalendar({ selectedDates, onDateSelect, showHints = false }: SimpleCalendarProps) {
+export function SimpleCalendar({ 
+  selectedDates, 
+  onDateSelect, 
+  showHints = false,
+  allowPastDates = false // Por padrão, não permite datas passadas
+}: SimpleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const today = new Date()
@@ -31,6 +37,8 @@ export function SimpleCalendar({ selectedDates, onDateSelect, showHints = false 
 
   // Verificar se pode navegar para o mês anterior
   const canNavigatePrev = () => {
+    if (allowPastDates) return true // Se permite datas passadas, sempre pode navegar
+    
     const prevMonth = new Date(currentYear, currentMonth - 1, 1)
     const todayMonth = new Date(today.getFullYear(), today.getMonth(), 1)
     return prevMonth >= todayMonth
@@ -78,22 +86,31 @@ export function SimpleCalendar({ selectedDates, onDateSelect, showHints = false 
     const isPast = isPastDate(day)
     const selected = isSelected(day)
     const todayDate = isToday(day)
+    const isDisabled = !allowPastDates && isPast // Só desabilita se não permitir datas passadas
 
     calendarDays.push(
       <button
         key={day}
-        disabled={isPast}
+        disabled={isDisabled}
         className={`h-8 w-8 text-sm rounded transition-all ${
-          isPast
+          isDisabled
             ? "text-gray-400 cursor-not-allowed"
             : selected
               ? "bg-blue-600 text-white hover:bg-blue-700 font-medium"
               : todayDate
                 ? "bg-gray-200 text-gray-900 font-semibold hover:bg-gray-300"
-                : "text-gray-900 hover:bg-gray-100"
+                : isPast && allowPastDates
+                  ? "text-gray-600 hover:bg-gray-100" // Estilo diferente para datas passadas quando permitidas
+                  : "text-gray-900 hover:bg-gray-100"
         }`}
-        onClick={() => !isPast && onDateSelect(formatDateString(day))}
-        title={isPast ? 'Data passada' : selected ? 'Remover seleção' : 'Selecionar data'}
+        onClick={() => !isDisabled && onDateSelect(formatDateString(day))}
+        title={
+          isDisabled 
+            ? 'Data passada' 
+            : selected 
+              ? 'Remover seleção' 
+              : 'Selecionar data'
+        }
       >
         {day}
       </button>
@@ -114,7 +131,11 @@ export function SimpleCalendar({ selectedDates, onDateSelect, showHints = false 
                   ? 'hover:bg-gray-100 text-gray-700' 
                   : 'text-gray-300 cursor-not-allowed'
               }`}
-              title={canNavigatePrev() ? 'Mês anterior' : 'Não é possível voltar para meses passados'}
+              title={
+                canNavigatePrev() 
+                  ? 'Mês anterior' 
+                  : 'Não é possível voltar para meses passados'
+              }
             >
               <ChevronLeft className="h-5 w-5" />
             </button>

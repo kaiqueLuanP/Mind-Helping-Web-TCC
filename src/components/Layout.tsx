@@ -56,12 +56,6 @@ export default function Layout({ children }: LayoutProps) {
       link: '/patients'
     },
     {
-      id: 3,
-      icon: <ChartLine className="w-5 h-5" />,
-      label: 'Relatórios',
-      link: '/reports'
-    },
-    {
       id: 4,
       icon: <BookAIcon className="w-5 h-5" />,
       label: 'Agenda',

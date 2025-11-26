@@ -9,11 +9,9 @@ import Contact from '../components/Contact';
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
-
 function RouteComponent() {
   return (
-      <div className="min-h-screen  text-white relative">
-        {/* Overlay gradiente semi-transparente */}
+      <div className="min-h-screen text-white relative">
         <div 
           className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/90 z-0"
           style={{
@@ -24,20 +22,23 @@ function RouteComponent() {
             mixBlendMode: 'overlay'
           }}
         />
-        {/* <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <LoginForm className="max-w-md w-full" />
-      </div> */}
-  
         
-        {/* Conteúdo */}
         <div className="relative z-10">
           <Navbar />
           <Hero />
-          <About />
-          <WorkWithUs />
-          <FAQ />
-          <Contact />
+          <div id="About">
+            <About />
+          </div>
+          <div id="WorkWithUs">
+            <WorkWithUs />
+          </div>
+          <div id="faq">
+            <FAQ />
+          </div>
+          <div id="Contact">
+            <Contact />
+          </div>
         </div>
       </div>
     );
-  }
+}

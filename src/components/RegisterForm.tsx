@@ -14,6 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import professionalService, { ProfessionalRegisterData } from '@/services/professionalService';
+import { maskCPF, maskPhone, maskCEP, maskCRP, removeMask, validateCPF } from '@/utils/masks';
+import { buscarCEP } from '@/services/viaCepService';
+import { Loader2 } from 'lucide-react';
 
 export function RegisterForm({
     className,
@@ -21,6 +24,7 @@ export function RegisterForm({
 }: React.ComponentProps<"div">) {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingCEP, setIsLoadingCEP] = useState(false);
     const [error, setError] = useState('');
     
     const [formData, setFormData] = useState<ProfessionalRegisterData>({
@@ -37,7 +41,7 @@ export function RegisterForm({
         number: '',
         neighborhood: '',
         city: '',
-        state: 'SP', // Padrão: São Paulo
+        state: 'SP',
         complement: '',
         
         // Dados de Acesso
@@ -53,12 +57,58 @@ export function RegisterForm({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
+        
+        let maskedValue = value;
+
+        // Aplicar máscaras
+        switch (id) {
+            case 'cpf':
+                maskedValue = maskCPF(value);
+                break;
+            case 'phone':
+                maskedValue = maskPhone(value);
+                break;
+            case 'cep':
+                maskedValue = maskCEP(value);
+                break;
+            case 'crp':
+                maskedValue = maskCRP(value);
+                break;
+        }
+
         setFormData(prev => ({
             ...prev,
-            [id]: value
+            [id]: maskedValue
         }));
-        // Limpar erro ao digitar
+        
         if (error) setError('');
+    };
+
+    // Buscar CEP automaticamente
+    const handleCEPBlur = async () => {
+        const cepLimpo = removeMask(formData.cep);
+        
+        if (cepLimpo.length === 8) {
+            setIsLoadingCEP(true);
+            try {
+                const endereco = await buscarCEP(formData.cep);
+                
+                if (endereco) {
+                    setFormData(prev => ({
+                        ...prev,
+                        street: endereco.logradouro || prev.street,
+                        neighborhood: endereco.bairro || prev.neighborhood,
+                        city: endereco.localidade || prev.city,
+                        state: endereco.uf || prev.state,
+                        complement: endereco.complemento || prev.complement,
+                    }));
+                }
+            } catch (err: any) {
+                setError(err.message || 'Erro ao buscar CEP');
+            } finally {
+                setIsLoadingCEP(false);
+            }
+        }
     };
 
     const handleCheckboxChange = (id: string, checked: boolean) => {
@@ -75,6 +125,30 @@ export function RegisterForm({
             !formData.street || !formData.number || !formData.neighborhood || 
             !formData.city || !formData.state || !formData.email || !formData.password) {
             setError('Por favor, preencha todos os campos obrigatórios (*)');
+            return false;
+        }
+
+        // Validar CPF
+        if (!validateCPF(formData.cpf)) {
+            setError('CPF inválido');
+            return false;
+        }
+
+        // Validar CEP
+        if (removeMask(formData.cep).length !== 8) {
+            setError('CEP inválido');
+            return false;
+        }
+
+        // Validar telefone
+        if (removeMask(formData.phone).length < 10) {
+            setError('Telefone inválido');
+            return false;
+        }
+
+        // Validar CRP
+        if (removeMask(formData.crp).length !== 8) {
+            setError('CRP inválido (formato: 00/000000)');
             return false;
         }
 
@@ -110,12 +184,19 @@ export function RegisterForm({
         setIsLoading(true);
 
         try {
-            // Fazer cadastro
-            const response = await professionalService.register(formData);
+            // Remover máscaras antes de enviar
+            const dataToSend = {
+                ...formData,
+                cpf: removeMask(formData.cpf),
+                phone: removeMask(formData.phone),
+                cep: removeMask(formData.cep),
+                crp: removeMask(formData.crp),
+            };
+
+            const response = await professionalService.register(dataToSend);
             
             console.log('Cadastro realizado com sucesso:', response);
             
-            // Redirecionar para login
             navigate({ to: '/login' });
             
         } catch (err: any) {
@@ -184,6 +265,7 @@ export function RegisterForm({
                                             placeholder="000.000.000-00"
                                             value={formData.cpf}
                                             onChange={handleChange}
+                                            maxLength={14}
                                             required
                                         />
                                     </div>
@@ -199,6 +281,7 @@ export function RegisterForm({
                                             placeholder="(11) 99999-9999"
                                             value={formData.phone}
                                             onChange={handleChange}
+                                            maxLength={15}
                                             required
                                         />
                                     </div>
@@ -207,9 +290,10 @@ export function RegisterForm({
                                         <Input
                                             id="crp"
                                             type="text"
-                                            placeholder="Ex: CRP 06/123456"
+                                            placeholder="00/000000"
                                             value={formData.crp}
                                             onChange={handleChange}
+                                            maxLength={9}
                                             required
                                         />
                                     </div>
@@ -226,14 +310,21 @@ export function RegisterForm({
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="grid gap-2">
                                         <Label htmlFor="cep">CEP *</Label>
-                                        <Input
-                                            id="cep"
-                                            type="text"
-                                            placeholder="00000-000"
-                                            value={formData.cep}
-                                            onChange={handleChange}
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                id="cep"
+                                                type="text"
+                                                placeholder="00000-000"
+                                                value={formData.cep}
+                                                onChange={handleChange}
+                                                onBlur={handleCEPBlur}
+                                                maxLength={9}
+                                                required
+                                            />
+                                            {isLoadingCEP && (
+                                                <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="street">Logradouro *</Label>
@@ -366,7 +457,6 @@ export function RegisterForm({
                                         type="password"
                                         placeholder="Mínimo 8 caracteres"
                                         minLength={8}
-                                        
                                         value={formData.password}
                                         onChange={handleChange}
                                         required
@@ -431,7 +521,14 @@ export function RegisterForm({
                                 className="w-full text-white bg-primary hover:bg-primary/90"
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'CADASTRANDO...' : 'CADASTRAR'}
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        CADASTRANDO...
+                                    </>
+                                ) : (
+                                    'CADASTRAR'
+                                )}
                             </Button>
 
                             {/* Link para Login */}

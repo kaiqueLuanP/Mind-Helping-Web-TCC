@@ -16,41 +16,52 @@ import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import { useDadosGraficoUltimos6Meses } from '@/hooks/useDadosGraficoUltimos6Meses'
 import { Input } from '@/components/ui/input'
 import { CalendarIcon } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 interface ChartSchedulingPreviousSixMonthsProps {
-  dataInicio: string
-  dataFim: string
-  onDataInicioChange: (data: string) => void
-  onDataFimChange: (data: string) => void
+    dataInicio: string
+    dataFim: string
+    onDataInicioChange: (data: string) => void
+    onDataFimChange: (data: string) => void
 }
 
 // Função para formatar o número do mês em nome completo
 function formatarMesCompleto(numeroMes: number): string {
-  const meses = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-  ]
-  return meses[numeroMes - 1]
+    const meses = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ]
+    return meses[numeroMes - 1]
 }
 
 // Função para obter o ano atual
 function obterAnoAtual(): string {
-  return new Date().getFullYear().toString()
+    return new Date().getFullYear().toString()
 }
 
 // Função para converter data YYYY-MM-DD para número do mês
 function extrairMesDaData(dataStr: string): number {
-  const partes = dataStr.split('-')
-  return parseInt(partes[1])
+    const partes = dataStr.split('-')
+    return parseInt(partes[1])
 }
 
 export function ChartSchedulingPreviousSixMonths({
-  dataInicio,
-  dataFim,
-  onDataInicioChange,
-  onDataFimChange
+    dataInicio,
+    dataFim,
+    onDataInicioChange,
+    onDataFimChange
 }: ChartSchedulingPreviousSixMonthsProps) {
     const { data, isLoading, error } = useDadosGraficoUltimos6Meses()
+    
+    // Estados temporários para as datas
+    const [dataInicioTemp, setDataInicioTemp] = useState(dataInicio)
+    const [dataFimTemp, setDataFimTemp] = useState(dataFim)
+
+    // Sincroniza os valores temporários quando as props mudarem
+    useEffect(() => {
+        setDataInicioTemp(dataInicio)
+        setDataFimTemp(dataFim)
+    }, [dataInicio, dataFim])
 
     // Formata os dados da API para o formato do gráfico
     let chartData = data?.map(item => ({
@@ -61,12 +72,12 @@ export function ChartSchedulingPreviousSixMonths({
 
     // Filtra dados baseado no período selecionado
     if (dataInicio && dataFim) {
-      const mesInicio = extrairMesDaData(dataInicio)
-      const mesFim = extrairMesDaData(dataFim)
-      
-      chartData = chartData.filter(item => 
-        item.mesNumero >= mesInicio && item.mesNumero <= mesFim
-      )
+        const mesInicio = extrairMesDaData(dataInicio)
+        const mesFim = extrairMesDaData(dataFim)
+
+        chartData = chartData.filter(item =>
+            item.mesNumero >= mesInicio && item.mesNumero <= mesFim
+        )
     }
 
     // Determina o período dinamicamente
@@ -81,15 +92,29 @@ export function ChartSchedulingPreviousSixMonths({
         },
     } satisfies ChartConfig
 
+    // Função para aplicar o filtro
+    const aplicarFiltro = () => {
+        onDataInicioChange(dataInicioTemp)
+        onDataFimChange(dataFimTemp)
+    }
+
+    // Função para limpar o filtro
+    const limparFiltro = () => {
+        setDataInicioTemp('')
+        setDataFimTemp('')
+        onDataInicioChange('')
+        onDataFimChange('')
+    }
+
     return (
         <Card>
             <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex-1">
-                        <CardTitle>Pacientes atendidos nos últimos 6 meses</CardTitle>
+                        <CardTitle>Pacientes atendidos no período selecionado</CardTitle>
                         <CardDescription>{periodo}</CardDescription>
                     </div>
-                    
+
                     {/* Filtro de período sutil */}
                     <div className="flex gap-2 items-center flex-wrap md:flex-nowrap">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -98,25 +123,29 @@ export function ChartSchedulingPreviousSixMonths({
                         </div>
                         <Input
                             type="date"
-                            value={dataInicio}
-                            onChange={(e) => onDataInicioChange(e.target.value)}
+                            value={dataInicioTemp}
+                            onChange={(e) => setDataInicioTemp(e.target.value)}
                             className="h-8 w-28 text-xs"
                             placeholder="Data inicial"
                         />
                         <span className="text-xs text-muted-foreground">até</span>
                         <Input
                             type="date"
-                            value={dataFim}
-                            onChange={(e) => onDataFimChange(e.target.value)}
+                            value={dataFimTemp}
+                            onChange={(e) => setDataFimTemp(e.target.value)}
                             className="h-8 w-28 text-xs"
                             placeholder="Data final"
                         />
+                        <button
+                            onClick={aplicarFiltro}
+                            disabled={!dataInicioTemp || !dataFimTemp}
+                            className="h-8 px-3 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Aplicar
+                        </button>
                         {(dataInicio || dataFim) && (
                             <button
-                                onClick={() => {
-                                    onDataInicioChange('')
-                                    onDataFimChange('')
-                                }}
+                                onClick={limparFiltro}
                                 className="h-8 px-2 text-xs rounded hover:bg-muted transition-colors"
                             >
                                 Limpar

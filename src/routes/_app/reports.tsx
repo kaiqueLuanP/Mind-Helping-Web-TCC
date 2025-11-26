@@ -46,7 +46,6 @@ function ReportsComponent() {
               <h1 className="font-medium text-xl md:text-2xl">
                 Relatório do Paciente
               </h1>
-              <p className="text-sm text-gray-500">ID: {patientId}</p>
             </>
           ) : (
             <>

@@ -299,7 +299,11 @@ export function AppointmentsScheduler() {
       {/* GRID: Calendar + Agendamentos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         <div>
-          <SimpleCalendar selectedDates={selectedDates} onDateSelect={handleDateSelect} />
+          <SimpleCalendar 
+          selectedDates={selectedDates}
+          onDateSelect={handleDateSelect}
+          allowPastDates={true}
+        />
         </div>
 
         <div className="lg:col-span-2 space-y-6">

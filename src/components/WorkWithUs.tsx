@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import professional from '../assets/professional.png';
 import { Button } from './ui/button';
 
@@ -44,9 +45,11 @@ function WorkWithUs() {
                 <span className="text-gray-700 text-sm">Suporte dedicado</span>
               </div>
             </div>
-            <Button type='button' className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold hover:bg-blue-700 transition-colors">
-              Junte-se a nós
-            </Button>
+            <Link to="/login">
+              <Button type='button' className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold hover:bg-blue-700 transition-colors">
+                Junte-se a nós
+              </Button>
+            </Link>
           </div>
           <div className="relative flex justify-center items-center">
             <img
