@@ -21,7 +21,7 @@ export function useDadosDashboard(filtroDataInicio?: string, filtroDataFim?: str
   const dataFim = filtroDataFim || format(new Date(), 'yyyy-MM-dd')                // Hoje ou data filtrada
   const dataInicio = filtroDataInicio || format(subDays(new Date(), 7), 'yyyy-MM-dd')  // 7 dias atrás ou data filtrada
 
-  console.log('📅 Período da consulta:', {
+  console.log('Período da consulta:', {
     dataInicio,  
     dataFim,    
     diasAtras: 7,
@@ -37,7 +37,7 @@ export function useDadosDashboard(filtroDataInicio?: string, filtroDataFim?: str
 
       try {
         // Log das URLs antes de fazer as chamadas
-        console.log('🔗 URLs das requisições:', {
+        console.log('URLs das requisições:', {
           numeroPacientesUrl: `/professionals/number-patients/${user.id}`,
           taxaPresencaUrl: `/professionals/attendance-rate/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`,
           cancelamentosUrl: `/professionals/number-of-cancelations/${user.id}?startDay=${dataInicio}&endDay=${dataFim}`,
@@ -58,7 +58,7 @@ export function useDadosDashboard(filtroDataInicio?: string, filtroDataFim?: str
         ])
 
         // Log responses for debugging
-        console.log('📊 Respostas da API:', {
+        console.log('Respostas da API:', {
           numeroPacientes: numeroPacientes.data,
           taxaPresenca: taxaPresenca.data,
           cancelamentos: cancelamentos.data,
@@ -75,7 +75,7 @@ export function useDadosDashboard(filtroDataInicio?: string, filtroDataFim?: str
           clientesAgendados: clientesAgendados.data?.schedulingsCount ?? 0
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar dados do dashboard:', error)
+        console.error('Erro ao buscar dados do dashboard:', error)
         toast.error('Erro ao carregar os dados do dashboard')
         
         return {

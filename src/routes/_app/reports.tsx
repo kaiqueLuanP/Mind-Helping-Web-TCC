@@ -11,10 +11,10 @@ import { useState } from 'react'
 // Validação de parâmetros de busca
 const reportSearchSchema = {
   patientId: (value: unknown) => {
-    console.log('🔍 Validando patientId:', value, 'tipo:', typeof value)
+    console.log('Validando patientId:', value, 'tipo:', typeof value)
     // Se for string UUID ou número, aceita
     const result = typeof value === 'string' && value.length > 0 ? value : undefined
-    console.log('✅ Resultado da validação:', result)
+    console.log('Resultado da validação:', result)
     return result
   }
 }
@@ -32,9 +32,6 @@ function ReportsComponent() {
   const { patientId } = Route.useSearch()
   const [moodStartDate, setMoodStartDate] = useState('2025-03-15')
   const [moodEndDate, setMoodEndDate] = useState('2025-03-20')
-
-  // Log para debug
-  console.log('📋 Reports - patientId:', patientId)
 
   return (
     <Layout>

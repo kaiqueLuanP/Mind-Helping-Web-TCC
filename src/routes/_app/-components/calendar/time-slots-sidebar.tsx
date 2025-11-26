@@ -32,14 +32,14 @@ export function TimeSlotsSidebar({
 
   const PREVIEW_LIMIT = 6
 
-  // ✅ CORREÇÃO: Buscar hourlies SEMPRE que houver scheduleId, independente do modo
+  //CORREÇÃO: Buscar hourlies SEMPRE que houver scheduleId, independente do modo
   useEffect(() => {
     if (scheduleId) {
-      console.log('🔍 [SIDEBAR] Buscando hourlies para schedule:', scheduleId);
-      console.log('🔍 [SIDEBAR] Modo:', isControlledByHours ? 'CONTROLADO' : 'LIVRE');
+      console.log('[SIDEBAR] Buscando hourlies para schedule:', scheduleId);
+      console.log('[SIDEBAR] Modo:', isControlledByHours ? 'CONTROLADO' : 'LIVRE');
       fetchHourlies()
     }
-  }, [scheduleId]) // ✅ Removido isControlledByHours da dependência
+  }, [scheduleId]) // Removido isControlledByHours da dependência
 
   useEffect(() => {
     if (isEditing) {
@@ -54,30 +54,30 @@ export function TimeSlotsSidebar({
     setError(null)
 
     try {
-      console.log('📤 [SIDEBAR] Chamando API /hourlies/' + scheduleId);
+      console.log('[SIDEBAR] Chamando API /hourlies/' + scheduleId);
       const data = await scheduleService.getHourlies(scheduleId)
-      console.log('📦 [SIDEBAR] Hourlies recebidos:', data);
-      console.log('📦 [SIDEBAR] Quantidade:', data.length);
+      console.log('[SIDEBAR] Hourlies recebidos:', data);
+      console.log('[SIDEBAR] Quantidade:', data.length);
       setApiHourlies(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
-      console.error('❌ [SIDEBAR] Erro ao buscar hourlies:', err)
+      console.error('[SIDEBAR] Erro ao buscar hourlies:', err)
       setError(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
-  // ✅ Determinar quais horários exibir
+  // Determinar quais horários exibir
   let allTimes: HourlySlot[] = [];
 
   if (apiHourlies.length > 0) {
-    // ✅ Se tem hourlies da API, usar eles (SEMPRE - controlado ou livre)
-    console.log('✅ [SIDEBAR] Usando hourlies da API:', apiHourlies.length);
+    // Se tem hourlies da API, usar eles (SEMPRE - controlado ou livre)
+    console.log('[SIDEBAR] Usando hourlies da API:', apiHourlies.length);
     allTimes = apiHourlies;
   } else if (isControlledByHours && generatedTimes.length > 0) {
-    // ✅ Fallback: horários gerados localmente (modo controlado)
-    console.log('⚠️ [SIDEBAR] Usando horários gerados localmente:', generatedTimes.length);
+    // Fallback: horários gerados localmente (modo controlado)
+    console.log('[SIDEBAR] Usando horários gerados localmente:', generatedTimes.length);
     allTimes = generatedTimes.map((time, i) => ({ 
       id: `temp-${i}`, 
       hour: time, 
@@ -86,8 +86,8 @@ export function TimeSlotsSidebar({
       date: ''
     }));
   } else if (!isControlledByHours && customTimes.length > 0) {
-    // ✅ Fallback: horários customizados locais (modo livre)
-    console.log('⚠️ [SIDEBAR] Usando horários customizados locais:', customTimes.length);
+    // Fallback: horários customizados locais (modo livre)
+    console.log('[SIDEBAR] Usando horários customizados locais:', customTimes.length);
     allTimes = customTimes.map((ct, i) => ({ 
       id: `custom-${i}`, 
       hour: ct.time,
@@ -107,7 +107,7 @@ export function TimeSlotsSidebar({
           {isControlledByHours ? 'Horários gerados' : 'Horários customizados'}
         </h4>
         
-        {/* ✅ Botão de refresh manual */}
+        {/*Botão de refresh manual */}
         {scheduleId && (
           <button
             onClick={fetchHourlies}

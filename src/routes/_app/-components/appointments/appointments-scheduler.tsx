@@ -92,52 +92,51 @@ export function AppointmentsScheduler() {
     fetchScheduleIds()
   }, [user?.id])
 
-  // ✅ BUSCAR PACIENTES - Usando API diretamente
+  // BUSCAR PACIENTES
   useEffect(() => {
     const fetchPatients = async () => {
       if (!user?.id) {
-        console.warn('⚠️ Usuário não autenticado, não buscando pacientes')
+        console.warn('Usuário não autenticado, não buscando pacientes')
         return
       }
       
-      console.log('🔍 Iniciando busca de pacientes...')
-      console.log('🔍 ID do profissional:', user.id)
+      console.log('Iniciando busca de pacientes...')
       
       setLoadingPatients(true)
       
       try {
-        console.log('🔄 [API CALL] Buscando pacientes do profissional:', user.id)
-        console.log('🔄 [API CALL] URL:', `/professionals/patients/${user.id}`)
-        
+        console.log('[API CALL] Buscando pacientes do profissional:', user.id)
+        console.log('[API CALL] URL:', `/professionals/patients/${user.id}`)
+
         const response = await api.get<PatientsResponse>(
           `/professionals/patients/${user.id}`
         )
         
-        console.log('✅ [API RESPONSE] Resposta completa:', response.data)
-        console.log('✅ [API RESPONSE] Status:', response.status)
+        console.log('[API RESPONSE] Resposta completa:', response.data)
+        console.log('[API RESPONSE] Status:', response.status)
         
         const patientsData = response.data?.patients || []
-        
-        console.log('✅ Pacientes extraídos:', patientsData)
-        console.log('✅ Total de pacientes:', patientsData.length)
+
+        console.log('Pacientes extraídos:', patientsData)
+        console.log('Total de pacientes:', patientsData.length)
         
         setPatients(patientsData)
         
       } catch (error: any) {
-        console.error('❌ [API ERROR] Erro ao buscar pacientes:', error)
-        console.error('❌ [API ERROR] Status:', error?.response?.status)
-        console.error('❌ [API ERROR] Data:', error?.response?.data)
-        console.error('❌ [API ERROR] Message:', error?.message)
+        console.error('[API ERROR] Erro ao buscar pacientes:', error)
+        console.error('[API ERROR] Status:', error?.response?.status)
+        console.error('[API ERROR] Data:', error?.response?.data)
+        console.error('[API ERROR] Message:', error?.message)
         
         // Se for 404, não é erro crítico
         if (error?.response?.status === 404) {
-          console.log('⚠️ [API] Nenhum paciente encontrado (404) - Isso é normal')
+          console.log('[API] Nenhum paciente encontrado (404) - Isso é normal')
         }
         
         setPatients([])
       } finally {
         setLoadingPatients(false)
-        console.log('🏁 Busca de pacientes finalizada')
+        console.log('Busca de pacientes finalizada')
       }
     }
     
@@ -148,12 +147,12 @@ export function AppointmentsScheduler() {
     setSelectedDates([date])
     
     if (!user?.id) {
-      console.warn('⚠️ Usuário não autenticado')
+      console.warn('Usuário não autenticado')
       return
     }
     
     if (scheduleIds.length === 0) {
-      console.warn('⚠️ Nenhuma agenda encontrada para este profissional')
+      console.warn('Nenhuma agenda encontrada para este profissional')
       setAppointments([])
       return
     }
@@ -180,7 +179,7 @@ export function AppointmentsScheduler() {
       const schedulings = allSchedulings.flat()
       
       if (!Array.isArray(schedulings)) {
-        console.warn('⚠️ Resposta não é um array:', schedulings)
+        console.warn('Resposta não é um array:', schedulings)
         setAppointments([])
         return
       }
@@ -207,7 +206,7 @@ export function AppointmentsScheduler() {
       setAppointments(transformedAppointments)
       
     } catch (error: any) {
-      console.error('❌ Erro ao buscar agendamentos:', error)
+      console.error('Erro ao buscar agendamentos:', error)
       setAppointments([])
     } finally {
       setIsLoading(false)

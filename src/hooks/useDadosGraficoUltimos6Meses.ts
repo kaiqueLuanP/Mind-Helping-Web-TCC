@@ -33,12 +33,12 @@ async function fetchPacientesAtendidosMes(
       { params: { month } } // Enviando apenas o número do mês (1-12)
     )
     
-    console.log(`📊 Pacientes atendidos em mês ${month}:`, response.data)
+    console.log(`Pacientes atendidos em mês ${month}:`, response.data)
     
     // Extrai o número de pacientes da resposta da API
     return response.data?.numberPatientsServedByMonth ?? 0
   } catch (error) {
-    console.error(`❌ Erro ao buscar dados do mês ${month}:`, error)
+    console.error(`Erro ao buscar dados do mês ${month}:`, error)
     return 0
   }
 }
@@ -48,7 +48,7 @@ export function useDadosGraficoUltimos6Meses() {
   
   const meses = getUltimos6Meses()
   
-  console.log('📅 Meses do gráfico:', meses)
+  console.log('Meses do gráfico:', meses)
 
   return useQuery<MonthData[]>({
     queryKey: ['grafico-pacientes-6-meses', user?.id],
@@ -58,7 +58,7 @@ export function useDadosGraficoUltimos6Meses() {
       }
 
       try {
-        console.log('🔗 Buscando dados do gráfico para:', {
+        console.log('Buscando dados do gráfico para:', {
           professionalId: user.id,
           meses
         })
@@ -76,11 +76,11 @@ export function useDadosGraficoUltimos6Meses() {
           count: resultados[index]
         }))
         
-        console.log('✅ Dados do gráfico carregados:', dados)
+        console.log('Dados do gráfico carregados:', dados)
         
         return dados
       } catch (error) {
-        console.error('❌ Erro ao buscar dados do gráfico:', error)
+        console.error('Erro ao buscar dados do gráfico:', error)
         toast.error('Erro ao carregar dados do gráfico')
         
         // Retorna dados vazios em caso de erro

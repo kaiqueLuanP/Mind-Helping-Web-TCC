@@ -37,12 +37,12 @@ export function CalendarScheduler() {
       
       try {
         setIsLoading(true);
-        console.log('🔍 Buscando agendas existentes...');
+        console.log('Buscando agendas existentes...');
         const schedules = await scheduleService.getSchedules(user.id);
-        console.log('📦 Agendas recebidas:', schedules);
+        console.log('Agendas recebidas:', schedules);
         
         if (!schedules || schedules.length === 0) {
-          console.log('ℹ️ Nenhuma agenda encontrada');
+          console.log('Nenhuma agenda encontrada');
           setCreatedSchedules([]);
           return;
         }
@@ -69,9 +69,9 @@ export function CalendarScheduler() {
         });
         
         setCreatedSchedules(mappedSchedules);
-        console.log(`✅ ${mappedSchedules.length} agendas carregadas com sucesso`);
+        console.log(`${mappedSchedules.length} agendas carregadas com sucesso`);
       } catch (error: any) {
-        console.error('❌ Erro ao carregar agendas:', error);
+        console.error('Erro ao carregar agendas:', error);
         // Não mostrar erro se for 404 (sem agendas)
         if (error.response?.status !== 404) {
           addToast('Você não possui agendas criadas', 'warning');
@@ -137,9 +137,6 @@ export function CalendarScheduler() {
         : [...prev, date]
     )
   }
-
- // ✅ SUBSTITUA a função handleCreateSchedule completa por esta versão corrigida:
-
 const handleCreateSchedule = async () => {
     const validation = validateForm()
 
@@ -162,7 +159,7 @@ const handleCreateSchedule = async () => {
       const futureDates: string[] = [];
       const pastDates: string[] = [];
       
-      // ✅ Filtrar datas futuras
+      // Filtrar datas futuras
       selectedDates.forEach(selectedDate => {
         const [year, month, day] = selectedDate.split('-').map(Number);
         
@@ -182,7 +179,7 @@ const handleCreateSchedule = async () => {
           console.warn(`⚠️ Data no passado ignorada: ${selectedDate}`);
           pastDates.push(selectedDate);
         } else {
-          console.log(`✅ Data futura válida: ${selectedDate}`);
+          console.log(`Data futura válida: ${selectedDate}`);
           futureDates.push(selectedDate);
         }
       });
@@ -214,20 +211,20 @@ const handleCreateSchedule = async () => {
         // MODO CONTROLADO: Usar startTime e endTime do formulário
         scheduleStartTime = startTime;
         scheduleEndTime = endTime;
-        console.log('⏰ Modo CONTROLADO:', { scheduleStartTime, scheduleEndTime, interval: intervalMinutes });
+        console.log('Modo CONTROLADO:', { scheduleStartTime, scheduleEndTime, interval: intervalMinutes });
       } else {
         // MODO LIVRE: Usar primeiro e último horário customizado
         const sortedTimes = [...customTimes].sort((a, b) => a.time.localeCompare(b.time));
         scheduleStartTime = sortedTimes[0].time;
         scheduleEndTime = sortedTimes[sortedTimes.length - 1].time;
-        console.log('🎯 Modo LIVRE:', { 
+        console.log('Modo LIVRE:', { 
           scheduleStartTime, 
           scheduleEndTime, 
           customTimes: customTimes.map(ct => ct.time) 
         });
       }
 
-      console.log('🚀 Criando schedules + hourlies...');
+      console.log('Criando schedules + hourlies...');
       
       // ✅ Criar schedule + hourlies (com suporte a horários customizados)
       const response = await scheduleService.createScheduleWithHourlies(
@@ -236,19 +233,18 @@ const handleCreateSchedule = async () => {
         futureDates,
         scheduleStartTime,
         scheduleEndTime,
-        // ✅ IMPORTANTE: Passar horários customizados quando não for controlado
         isControlledByHours ? undefined : customTimes.map(ct => ct.time)
       );
       
-      console.log('✅ Resposta completa:', response);
+      console.log('Resposta completa:', response);
 
-      // ✅ Recarregar agendas após criar
+      // Recarregar agendas após criar
       try {
         // Aguardar um pouco mais para garantir que os hourlies foram criados
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const updatedSchedules = await scheduleService.getSchedules(user.id);
-        console.log('🔄 Agendas recarregadas:', updatedSchedules);
+        console.log('Agendas recarregadas:', updatedSchedules);
         
         if (updatedSchedules && updatedSchedules.length > 0) {
           const mappedSchedules: Schedule[] = updatedSchedules.map(s => {
@@ -271,7 +267,7 @@ const handleCreateSchedule = async () => {
           });
           
           setCreatedSchedules(mappedSchedules);
-          console.log('✅ Agendas atualizadas no estado');
+          console.log('Agendas atualizadas no estado');
         }
       } catch (reloadError) {
         console.warn('⚠️ Não foi possível recarregar agendas, mas criação foi bem-sucedida');
@@ -279,7 +275,7 @@ const handleCreateSchedule = async () => {
       
       clearForm();
       
-      // ✅ Mensagem de sucesso diferente para cada modo
+      // Mensagem de sucesso diferente para cada modo
       const modoTexto = isControlledByHours ? 'horários automáticos' : 'horários customizados';
       addToast(`Agenda criada com sucesso para ${futureDates.length} dia(s) com ${modoTexto}!`, 'success');
 
@@ -367,7 +363,7 @@ const handleCreateSchedule = async () => {
 
     try {
       setIsLoading(true);
-      console.log('🗑️ Deletando agenda:', id);
+      console.log('Deletando agenda:', id);
       
       await scheduleService.deleteSchedule(id);
       
@@ -378,9 +374,9 @@ const handleCreateSchedule = async () => {
       }
       
       addToast('Agenda excluída com sucesso!', 'success');
-      console.log('✅ Agenda deletada');
+      console.log('Agenda deletada');
     } catch (error: any) {
-      console.error('❌ Erro ao deletar:', error);
+      console.error('Erro ao deletar:', error);
       addToast('Erro ao excluir agenda. Tente novamente.', 'error');
     } finally {
       setIsLoading(false);

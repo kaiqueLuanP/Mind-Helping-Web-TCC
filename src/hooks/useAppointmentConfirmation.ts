@@ -122,12 +122,12 @@ export function useAppointmentConfirmation(
 
   // Confirmar uma consulta
   const confirmAppointment = useCallback(async (appointmentId: string) => {
-    console.log('🎯 [HOOK] Iniciando confirmação de consulta:', appointmentId)
+    console.log(' [HOOK] Iniciando confirmação de consulta:', appointmentId)
     
     try {
-      console.log('🎯 [HOOK] Chamando scheduleService.confirmAppointment...')
+      console.log(' [HOOK] Chamando scheduleService.confirmAppointment...')
       const result = await scheduleService.confirmAppointment(appointmentId)
-      console.log('🎯 [HOOK] Resposta recebida da API:', result)
+      console.log(' [HOOK] Resposta recebida da API:', result)
       
       const newConfirmations = new Map(confirmations)
       newConfirmations.set(appointmentId, {
@@ -139,13 +139,13 @@ export function useAppointmentConfirmation(
       
       setPendingConfirmations(prev => prev.filter(apt => apt.id !== appointmentId))
       
-      console.log('✅ [HOOK] Consulta confirmada e salva no localStorage')
+      console.log('[HOOK] Consulta confirmada e salva no localStorage')
       return true
     } catch (error: any) {
-      console.log('⚠️ [HOOK] Tratando resposta da API...')
+      console.log('[HOOK] Tratando resposta da API...')
       
       if (error?.response?.status === 204) {
-        console.log('✅ [HOOK] API retornou 204 (No Content) - Considerando sucesso')
+        console.log('[HOOK] API retornou 204 (No Content) - Considerando sucesso')
         
         const newConfirmations = new Map(confirmations)
         newConfirmations.set(appointmentId, {
@@ -156,11 +156,11 @@ export function useAppointmentConfirmation(
         setConfirmations(newConfirmations)
         
         setPendingConfirmations(prev => prev.filter(apt => apt.id !== appointmentId))
-        console.log('✅ [HOOK] Consulta confirmada e salva no localStorage')
+        console.log('[HOOK] Consulta confirmada e salva no localStorage')
         return true
       }
       
-      console.error('❌ [HOOK] Erro não tratado ao confirmar consulta:', error)
+      console.error('[HOOK] Erro não tratado ao confirmar consulta:', error)
       return false
     }
   }, [confirmations])
@@ -189,11 +189,11 @@ export function useAppointmentConfirmation(
       setShowModal(false)
       
       const successCount = results.filter(r => r.status === 'fulfilled').length
-      console.log(`✅ ${successCount}/${appointmentIds.length} consultas confirmadas`)
+      console.log(`${successCount}/${appointmentIds.length} consultas confirmadas`)
       
       return true
     } catch (error: any) {
-      console.error('❌ Erro ao confirmar consultas:', error)
+      console.error('Erro ao confirmar consultas:', error)
       return false
     }
   }, [confirmations])
@@ -214,7 +214,7 @@ export function useAppointmentConfirmation(
       
       setPendingConfirmations(prev => prev.filter(apt => apt.id !== appointmentId))
       
-      console.log('✅ Consulta marcada como falta:', appointmentId)
+      console.log('Consulta marcada como falta:', appointmentId)
       return true
     } catch (error: any) {
       if (error?.response?.status === 204) {
@@ -230,7 +230,7 @@ export function useAppointmentConfirmation(
         return true
       }
       
-      console.error('❌ Erro ao marcar como falta:', error)
+      console.error('Erro ao marcar como falta:', error)
       return false
     }
   }, [confirmations])
@@ -241,7 +241,7 @@ export function useAppointmentConfirmation(
     setConfirmations(new Map())
   }, [])
 
-  // ✅ Verificar tipo de confirmação
+  // Verificar tipo de confirmação
   const getConfirmationStatus = useCallback((id: string): ConfirmationAction | null => {
     const record = confirmations.get(id)
     return record?.action || null

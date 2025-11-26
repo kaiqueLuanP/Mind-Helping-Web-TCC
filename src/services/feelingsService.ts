@@ -31,9 +31,9 @@ const FeelingsService = {
     endDay: string
   ): Promise<FeelingEntry[]> {
     try {
-      console.log('🔄 [FEELINGS API] Buscando sentimentos:', { userId, startDay, endDay })
-      console.log('🔄 [FEELINGS API] URL:', `/feelings/${userId}`)
-      console.log('🔄 [FEELINGS API] Query params:', { startDay, endDay })
+      console.log('  [FEELINGS API] Buscando sentimentos:', { userId, startDay, endDay })
+      console.log('  [FEELINGS API] URL:', `/feelings/${userId}`)
+      console.log('  [FEELINGS API] Query params:', { startDay, endDay })
       
       const response = await api.get<FeelingsResponse>(
         `/feelings/${userId}`,
@@ -45,24 +45,21 @@ const FeelingsService = {
         }
       )
       
-      console.log('✅ [FEELINGS API] Resposta completa:', response.data)
-      console.log('✅ [FEELINGS API] Status:', response.status)
+      console.log('[FEELINGS API] Resposta completa:', response.data)
+      console.log('[FEELINGS API] Status:', response.status)
       
       const feelings = response.data?.feelings || []
-      
-      console.log('✅ [FEELINGS API] Sentimentos extraídos:', feelings)
-      console.log('✅ [FEELINGS API] Total:', feelings.length)
       
       return feelings
       
     } catch (error: any) {
-      console.error('❌ [FEELINGS API ERROR] Erro ao buscar sentimentos:', error)
-      console.error('❌ [FEELINGS API ERROR] Status:', error?.response?.status)
-      console.error('❌ [FEELINGS API ERROR] Data:', error?.response?.data)
-      
+      console.error('[FEELINGS API ERROR] Erro ao buscar sentimentos:', error)
+      console.error('[FEELINGS API ERROR] Status:', error?.response?.status)
+      console.error('[FEELINGS API ERROR] Data:', error?.response?.data)
+
       // Se for 404, não é erro crítico
       if (error?.response?.status === 404) {
-        console.log('⚠️ [FEELINGS API] Nenhum sentimento encontrado (404)')
+        console.log('[FEELINGS API] Nenhum sentimento encontrado (404)')
         return []
       }
       
@@ -78,13 +75,13 @@ const FeelingsService = {
    */
   async getFeelingsByDate(userId: string, date: string): Promise<FeelingEntry[]> {
     try {
-      console.log('🔄 [FEELINGS API] Buscando sentimentos do dia:', { userId, date })
+      console.log('  [FEELINGS API] Buscando sentimentos do dia:', { userId, date })
       
       // Usar o mesmo dia como início e fim
       return await this.getFeelingsByDateRange(userId, date, date)
       
     } catch (error: any) {
-      console.error('❌ [FEELINGS API ERROR] Erro ao buscar sentimentos do dia:', error)
+      console.error('[FEELINGS API ERROR] Erro ao buscar sentimentos do dia:', error)
       
       if (error?.response?.status === 404) {
         return []

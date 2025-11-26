@@ -30,8 +30,8 @@ export function MoodDonutChart({ userId }: MoodDonutChartProps) {
   const [chartData, setChartData] = useState(calculateDonutChartData(feelings))
 
   useEffect(() => {
-    console.log('📊 MoodDonutChart - Atualizando gráfico com', feelings.length, 'sentimentos')
-    console.log('📊 MoodDonutChart - Dados completos:', feelings)
+    console.log('MoodDonutChart - Atualizando gráfico com', feelings.length, 'sentimentos')
+    console.log('MoodDonutChart - Dados completos:', feelings)
     const donutData = calculateDonutChartData(feelings)
     setChartData(donutData)
   }, [feelings])

@@ -38,10 +38,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('🔐 AuthContext: Iniciando login...');
+      console.log('AuthContext: Iniciando login...');
       const response = await ProfessionalService.login(email, password);
       
-      console.log('✅ AuthContext: Login bem-sucedido');
+      console.log('AuthContext: Login bem-sucedido');
       
       // Garantir que temos todos os dados necessários
       if (!response.token || !response.professional) {
@@ -56,8 +56,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem('token', response.token);
       localStorage.setItem('professionalId', response.professional.id);
 
-      console.log('✅ AuthContext: Estado e localStorage atualizados');
-
     } catch (error: any) {
       console.error('❌ AuthContext: Erro no login:', error);
       // Limpar estado em caso de erro
@@ -70,7 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
-    console.log('🚪 AuthContext: Fazendo logout...');
+    console.log('AuthContext: Fazendo logout...');
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
@@ -80,21 +78,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('🔍 AuthContext: Verificando autenticação...');
+      console.log('AuthContext: Verificando autenticação...');
       
       try {
         const storedToken = localStorage.getItem('token');
         const storedProfessionalId = localStorage.getItem('professionalId');
         const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
         
-        console.log('📦 AuthContext: Dados armazenados:', { 
+        console.log('AuthContext: Dados armazenados:', { 
           hasToken: !!storedToken,
           professionalId: storedProfessionalId,
           isAuthenticated: storedIsAuthenticated
         });
         
         if (!storedIsAuthenticated || !storedProfessionalId) {
-          console.log('⚠️ AuthContext: Credenciais não encontradas');
+          console.log('AuthContext: Credenciais não encontradas');
           setIsLoading(false);
           return;
         }
@@ -102,10 +100,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Configurar token nas requisições
         api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         
-        console.log('📡 AuthContext: Buscando perfil do usuário...');
+        console.log('AuthContext: Buscando perfil do usuário...');
         const profile = await ProfessionalService.getProfile();
         
-        console.log('✅ AuthContext: Perfil recebido:', {
+        console.log('AuthContext: Perfil recebido:', {
           id: profile.id,
           name: profile.name,
           email: profile.email
@@ -118,9 +116,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(profile);
         setToken(storedToken);
         
-        console.log('✅ AuthContext: Autenticação restaurada com sucesso');
+        console.log('AuthContext: Autenticação restaurada com sucesso');
       } catch (error: any) {
-        console.error('❌ AuthContext: Erro na verificação:', error);
+        console.error('AuthContext: Erro na verificação:', error);
         // Limpar dados em caso de erro
         setUser(null);
         setToken(null);
@@ -129,7 +127,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         api.defaults.headers.common['Authorization'] = '';
       } finally {
         setIsLoading(false);
-        console.log('✅ AuthContext: Verificação de autenticação concluída');
+        console.log('AuthContext: Verificação de autenticação concluída');
       }
     };
 
@@ -140,7 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Log do estado atual para debug
   useEffect(() => {
-    console.log('📊 AuthContext: Estado atual:', {
+    console.log('AuthContext: Estado atual:', {
       isAuthenticated,
       hasUser: !!user,
       hasToken: !!token,

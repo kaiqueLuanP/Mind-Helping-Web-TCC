@@ -30,7 +30,7 @@ export function AppointmentList({ userId }: AppointmentListProps) {
       setError(null)
 
       try {
-        console.log('📞 Buscando chamadas CVV para usuário:', userId)
+        console.log('Buscando chamadas CVV para usuário:', userId)
         
         const response = await api.get(
           `/cvv-calls/${userId}`,
@@ -41,13 +41,12 @@ export function AppointmentList({ userId }: AppointmentListProps) {
           }
         )
 
-        console.log('✅ Resposta completa da API:', response)
-        console.log('✅ Dados recebidos:', response.data)
+        console.log(' Resposta completa da API:', response)
         
         // Formatar os dados recebidos
         const formattedCalls = response.data.cvvCalls?.map((call: any) => {
-          console.log('🔍 Processando chamada:', call)
-          console.log('🔍 Data bruta:', call.dateCalled, 'Tipo:', typeof call.dateCalled)
+          console.log('Processando chamada:', call)
+          console.log('Data bruta:', call.dateCalled, 'Tipo:', typeof call.dateCalled)
           
           let formattedDate = 'Data inválida'
           
@@ -57,7 +56,7 @@ export function AppointmentList({ userId }: AppointmentListProps) {
               const dateObj = new Date(call.dateCalled)
               
               if (isNaN(dateObj.getTime())) {
-                console.warn('⚠️ Data inválida, tentando parse manual:', call.dateCalled)
+                console.warn('Data inválida, tentando parse manual:', call.dateCalled)
                 // Se for string em formato DD/MM/YYYY ou similar, tenta converter
                 formattedDate = String(call.dateCalled)
               } else {
@@ -69,7 +68,7 @@ export function AppointmentList({ userId }: AppointmentListProps) {
                 })
               }
             } catch (e) {
-              console.error('❌ Erro ao formatar data:', e, 'Data original:', call.dateCalled)
+              console.error('Erro ao formatar data:', e, 'Data original:', call.dateCalled)
               formattedDate = String(call.dateCalled)
             }
           }
@@ -82,15 +81,15 @@ export function AppointmentList({ userId }: AppointmentListProps) {
           }
         }) || []
 
-        console.log('✅ Chamadas formatadas:', formattedCalls)
+        console.log('Chamadas formatadas:', formattedCalls)
         setCalls(formattedCalls)
       } catch (err: any) {
-        console.error('❌ Erro ao buscar chamadas CVV:')
-        console.error('❌ Status:', err.response?.status)
-        console.error('❌ Dados do erro:', err.response?.data)
-        console.error('❌ Mensagem:', err.message)
-        console.error('❌ Stack:', err.stack)
-        
+        console.error('Erro ao buscar chamadas CVV:')
+        console.error('Status:', err.response?.status)
+        console.error('Dados do erro:', err.response?.data)
+        console.error('Mensagem:', err.message)
+        console.error('Stack:', err.stack)
+
         setError(err.response?.data?.message || err.message || 'Erro ao carregar chamadas CVV')
         setCalls([])
       } finally {

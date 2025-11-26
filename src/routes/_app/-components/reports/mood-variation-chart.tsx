@@ -38,8 +38,8 @@ export function MoodVariationChart({ userId }: MoodVariationChartProps) {
   const [moodData, setMoodData] = useState(calculateMoodAverages([]))
 
   useEffect(() => {
-    console.log('📊 MoodVariationChart - Atualizando gráfico com', feelings.length, 'sentimentos')
-    console.log('📊 MoodVariationChart - Dados completos:', feelings)
+    console.log('MoodVariationChart - Atualizando gráfico com', feelings.length, 'sentimentos')
+    console.log('MoodVariationChart - Dados completos:', feelings)
     const averages = calculateMoodAverages(feelings)
     setMoodData(averages)
   }, [feelings])

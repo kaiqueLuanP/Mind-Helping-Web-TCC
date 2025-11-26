@@ -28,17 +28,17 @@ export function useFeelingsData({
 
   const fetchFeelings = useCallback(async () => {
     if (!userId) {
-      console.warn('⚠️ userId não fornecido, não buscando sentimentos')
+      console.warn('userId não fornecido, não buscando sentimentos')
       setFeelings([])
       return
     }
 
     if (!startDate || !endDate) {
-      console.warn('⚠️ Datas não fornecidas, não buscando sentimentos')
+      console.warn('Datas não fornecidas, não buscando sentimentos')
       return
     }
 
-    console.log('🔍 Iniciando busca de sentimentos:', { userId, startDate, endDate })
+    console.log('Iniciando busca de sentimentos:', { userId, startDate, endDate })
     
     setIsLoading(true)
     setError(null)
@@ -50,12 +50,12 @@ export function useFeelingsData({
         endDate
       )
       
-      console.log('✅ Sentimentos carregados:', data.length)
-      console.log('✅ Dados dos sentimentos:', data)
+      console.log('Sentimentos carregados:', data.length)
+      console.log('Dados dos sentimentos:', data)
       setFeelings(data)
       
     } catch (err: any) {
-      console.error('❌ Erro ao carregar sentimentos:', err)
+      console.error('Erro ao carregar sentimentos:', err)
       setError(err.message || 'Erro ao carregar sentimentos')
       setFeelings([])
       

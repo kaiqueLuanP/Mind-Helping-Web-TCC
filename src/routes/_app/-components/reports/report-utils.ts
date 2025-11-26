@@ -33,7 +33,7 @@ export function transformFeelingToMoodEntry(feeling: FeelingEntry): MoodEntry {
   // Se não houver intensidade, usar 100 (valor cheio) por padrão ao invés de 50
   const intensity = feeling.intensity ?? 100
   
-  console.log('📊 transformFeelingToMoodEntry - Feeling:', { description: feeling.description, intensity: feeling.intensity, resultantIntensity: intensity })
+  console.log(' transformFeelingToMoodEntry - Feeling:', { description: feeling.description, intensity: feeling.intensity, resultantIntensity: intensity })
   
   return {
     date: feeling.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
@@ -112,8 +112,8 @@ export function calculateMoodAverages(data: MoodEntry[] | FeelingEntry[]): MoodA
     feelingsData = data as any[]
   }
   
-  console.log('📊 calculateMoodAverages - Dados do dia:', feelingsData)
-  console.log('📊 calculateMoodAverages - Descriptions encontrados:', feelingsData.map(f => f.description))
+  console.log(' calculateMoodAverages - Dados do dia:', feelingsData)
+  console.log(' calculateMoodAverages - Descriptions encontrados:', feelingsData.map(f => f.description))
   
   if (feelingsData.length === 0) {
     // Retorna valores zerados se não houver dados
@@ -146,7 +146,7 @@ export function calculateMoodAverages(data: MoodEntry[] | FeelingEntry[]): MoodA
       .toLowerCase()
       .trim()
     
-    console.log('📊 Processando sentiment:', { original: description, normalized })
+    console.log(' Processando sentiment:', { original: description, normalized })
     
     // Mapear variações para o nome padrão
     if (normalized.includes('feliz')) {
@@ -174,9 +174,9 @@ export function calculateMoodAverages(data: MoodEntry[] | FeelingEntry[]): MoodA
     color: getColorClass(mood)
   }))
 
-  console.log('📊 calculateMoodAverages - Contagem:', counts)
-  console.log('📊 calculateMoodAverages - Total:', total)
-  console.log('📊 calculateMoodAverages - Proporção percentual:', result)
+  console.log(' calculateMoodAverages - Contagem:', counts)
+  console.log(' calculateMoodAverages - Total:', total)
+  console.log(' calculateMoodAverages - Proporção percentual:', result)
   return result
 }
 
@@ -190,21 +190,21 @@ export function calculateDonutChartData(data: MoodEntry[] | FeelingEntry[]): Don
     const firstItem = data[0] as any
     if (firstItem.description !== undefined || (firstItem.userPersonId !== undefined && firstItem.mood === undefined)) {
       // É FeelingEntry
-      console.log('📊 calculateDonutChartData - Detectado FeelingEntry, transformando...')
+      console.log(' calculateDonutChartData - Detectado FeelingEntry, transformando...')
       moodData = (data as FeelingEntry[]).map(transformFeelingToMoodEntry)
     } else {
       // É MoodEntry
-      console.log('📊 calculateDonutChartData - Detectado MoodEntry')
+      console.log(' calculateDonutChartData - Detectado MoodEntry')
       moodData = data as MoodEntry[]
     }
   } else {
     moodData = []
   }
   
-  console.log('📊 calculateDonutChartData - Dados transformados:', moodData)
+  console.log(' calculateDonutChartData - Dados transformados:', moodData)
   
   if (moodData.length === 0) {
-    console.log('📊 calculateDonutChartData - Sem dados, retornando array vazio')
+    console.log(' calculateDonutChartData - Sem dados, retornando array vazio')
     return []
   }
 
@@ -220,7 +220,7 @@ export function calculateDonutChartData(data: MoodEntry[] | FeelingEntry[]): Don
     color: moodColors[mood] || '#6b7280'
   }))
   
-  console.log('📊 calculateDonutChartData - Resultado final:', result)
+  console.log(' calculateDonutChartData - Resultado final:', result)
   return result
 }
 
