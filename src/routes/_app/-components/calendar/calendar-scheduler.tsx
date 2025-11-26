@@ -74,7 +74,7 @@ export function CalendarScheduler() {
         console.error('❌ Erro ao carregar agendas:', error);
         // Não mostrar erro se for 404 (sem agendas)
         if (error.response?.status !== 404) {
-          addToast('Não foi possível carregar as agendas existentes', 'warning');
+          addToast('Você não possui agendas criadas', 'warning');
         }
       } finally {
         setIsLoading(false);
