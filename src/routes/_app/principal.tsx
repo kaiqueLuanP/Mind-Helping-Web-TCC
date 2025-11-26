@@ -52,7 +52,7 @@ function RouteComponent() {
             <CardIndicatorDashboard 
               title="Agendamentos" 
               indicator={dashboardData.clientesAgendados.toString()} 
-              description="Número de agendamentos da semana" 
+              description="Número de agendamentos realizados na semana" 
               icon={Book} 
               dataInicio={dataInicio}
               dataFim={dataFim}
